@@ -1,32 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Proyectos\\ReservAr\\ReservAr.csproj": {}
+    "C:\\Users\\Usuario\\Desktop\\PS_ReservAr-bk\\ReservAr.csproj": {}
   },
   "projects": {
-    "C:\\Proyectos\\ReservAr\\ReservAr.csproj": {
+    "C:\\Users\\Usuario\\Desktop\\PS_ReservAr-bk\\ReservAr.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Proyectos\\ReservAr\\ReservAr.csproj",
+        "projectUniqueName": "C:\\Users\\Usuario\\Desktop\\PS_ReservAr-bk\\ReservAr.csproj",
         "projectName": "ReservAr",
-        "projectPath": "C:\\Proyectos\\ReservAr\\ReservAr.csproj",
-        "packagesPath": "C:\\Users\\Marcos Sosa\\.nuget\\packages\\",
-        "outputPath": "C:\\Proyectos\\ReservAr\\obj\\",
+        "projectPath": "C:\\Users\\Usuario\\Desktop\\PS_ReservAr-bk\\ReservAr.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Desktop\\PS_ReservAr-bk\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Marcos Sosa\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://api.nuget.org/v3/index.json": {}
+          "https://www.nuget.org/api/v2/": {}
         },
         "frameworks": {
           "net10.0": {
@@ -54,25 +48,15 @@
               "target": "Package",
               "version": "[10.0.6, )"
             },
-            "Microsoft.DotNet.ILCompiler": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[10.0.6, )",
-              "autoReferenced": true
-            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[10.0.4, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
-              "target": "Package",
-              "version": "[10.0.4, )"
-            },
-            "Microsoft.NET.ILLink.Tasks": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.6, )",
-              "autoReferenced": true
+              "version": "[10.0.4, )"
             },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
@@ -90,28 +74,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[10.0.6, 10.0.6]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.NativeAOT.win-x64",
-              "version": "[10.0.6, 10.0.6]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[10.0.6, 10.0.6]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[10.0.6, 10.0.6]"
-            },
-            {
-              "name": "runtime.win-x64.Microsoft.DotNet.ILCompiler",
-              "version": "[10.0.6, 10.0.6]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -120,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
@@ -535,11 +497,6 @@
             "System.Xml.XPath": "(,4.3.32767]",
             "System.Xml.XPath.XDocument": "(,5.0.32767]"
           }
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
         }
       }
     }
