@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ReservAr.Data;
@@ -11,9 +12,11 @@ using ReservAr.Data;
 namespace ReservAr.Migrations
 {
     [DbContext(typeof(ReservArDbContext))]
-    partial class ReservArDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425231925_ChangeLongPassword")]
+    partial class ChangeLongPassword
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

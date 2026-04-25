@@ -36,7 +36,7 @@ namespace ReservAr.Data
                     .IsRequired();
 
                 entity.Property(e => e.PasswordHash)
-                    .HasMaxLength(12)
+                    .HasMaxLength(60)
                     .IsRequired();
 
                 entity.ToTable("User");
@@ -194,13 +194,11 @@ namespace ReservAr.Data
 
                 entity.HasOne<User>()
                     .WithMany()
-                    .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Restrict); // --> Revisar si queremos restringir la eliminacion de usuario por tener relaciones dependientes
+                    .HasForeignKey(e => e.UserId);
 
                 entity.HasOne<Seat>()
                     .WithMany()
-                    .HasForeignKey(e => e.SeatId)
-                    .OnDelete(DeleteBehavior.Restrict); // --> Revisar si queremos restringir la eliminacion de un asiento por tener relaciones dependientes
+                    .HasForeignKey(e => e.SeatId);
 
                 entity.ToTable("Reservation");
             });
@@ -210,7 +208,7 @@ namespace ReservAr.Data
 
             // Data seeding: Events
             modelBuilder.Entity<Event>().HasData(
-                new Event { Id = 1, Name = "Noche de Rock Amateur", Venue = "Niceto Club - CABA", Status = "Activo" }
+                new Event { Id = 1, Name = "Noche de Rock Amateur", EventDate = DateTime.ParseExact("16/06/2026 21:00:00", "dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture).ToUniversalTime(), Venue = "Niceto Club - CABA", Status = "Activo" }
             );
 
             //Data seeding: Sectors
