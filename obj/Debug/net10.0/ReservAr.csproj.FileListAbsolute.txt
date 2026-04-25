@@ -120,3 +120,17 @@ C:\Proyectos\ReservAr\bin\Debug\net10.0\ru\Microsoft.CodeAnalysis.Workspaces.MSB
 C:\Proyectos\ReservAr\bin\Debug\net10.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\Proyectos\ReservAr\bin\Debug\net10.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 C:\Proyectos\ReservAr\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+C:\Proyectos\ReservAr\obj\Debug\net10.0\ReservAr.sourcelink.json
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
+c:\Proyectos\ReservAr\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Proyectos\ReservAr\bin\Debug\net10.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Proyectos\ReservAr\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Proyectos\ReservAr\bin\Debug\net10.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Proyectos\ReservAr\bin\Debug\net10.0\ReservAr.xml
+C:\Proyectos\ReservAr\obj\Debug\net10.0\ReservAr.xml
