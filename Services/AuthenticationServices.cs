@@ -1,23 +1,33 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
+using ReservAr.Services.Interfaces;
 using System.Text;
 using ReservAr.Models;
 
 namespace ReservAr.Services
 {
-    
+    /// <summary>
+    /// Servicio de autenticación que se encarga de generar tokens JWT para los usuarios autenticados.
+    /// </summary>
     public class AuthenticationServices: IAuthenticationServices
     {
         private readonly string _keyJWT;
-        // MNS: Este servicio se encarga de la autenticacion de usuarios, manejo de tokens JWT, etc.
-        // MNS: Se puede expandir para incluir funcionalidades como refresco de tokens, revocacion, etc.
+        /// <summary>
+        /// Constructor que recibe la configuración de la aplicación para obtener la clave secreta utilizada en la generación de tokens JWT.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         public AuthenticationServices(IConfiguration config)
         {
             _keyJWT = config["Jwt:key"] ?? throw new InvalidOperationException("Jwt:key no está configurado");
         }
 
+        /// <summary>
+        /// Genera un token JWT para el usuario especificado.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();

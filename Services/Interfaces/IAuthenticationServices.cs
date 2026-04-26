@@ -1,5 +1,5 @@
 using ReservAr.Models;
-namespace ReservAr.Services
+namespace ReservAr.Services.Interfaces
 {
     public interface IAuthenticationServices
     {

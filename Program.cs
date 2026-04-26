@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ReservAr.Data;
 using ReservAr.Services;
+using ReservAr.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Obtiene la cadena de conexión del archivo appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Registra el DbContext para usar PostgreSQL
 builder.Services.AddDbContext<ReservArDbContext>(options =>
     options.UseNpgsql(connectionString));
 
