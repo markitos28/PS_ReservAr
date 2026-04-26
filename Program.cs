@@ -37,6 +37,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthenticationServices, AuthenticationServices>();
+builder.Services.AddScoped<ISectorService, SectorService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

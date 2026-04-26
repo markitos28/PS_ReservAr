@@ -1,4 +1,4 @@
-namespace ReservAr.Models.DTOs
+namespace ReservAr.Dtos.Users
 {
     public class UserRegisterDTO
     {
