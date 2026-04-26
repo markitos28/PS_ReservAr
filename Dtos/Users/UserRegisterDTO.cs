@@ -1,5 +1,8 @@
 namespace ReservAr.Dtos.Users
 {
+    /// <summary>
+    /// Registro de usuario DTO
+    /// </summary>
     public class UserRegisterDTO
     {
         public required string Name { get; set; }

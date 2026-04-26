@@ -15,11 +15,13 @@ namespace ReservAr.Controllers
     {
         private readonly ISectorService _sectorService;
         private readonly ILogger<SectorsController> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public SectorsController(ISectorService sectorService, ILogger<SectorsController> logger)
+        public SectorsController(ISectorService sectorService, ILogger<SectorsController> logger, IAuditLogService auditLogService)
         {
             _sectorService = sectorService;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -33,16 +35,17 @@ namespace ReservAr.Controllers
             try
             {
                 var result = await _sectorService.CreateAsync(request);
+                _auditLogService.Log(0, "REQUEST_SECTOR_CREATE_SUCCESS", "Sector", result.Id.ToString(), "Sector creado - " + result.Name);
                 return CreatedAtAction(nameof(GetById), new { sectorId = result.Id }, result);
             }
             catch (KeyNotFoundException ex)
             {
-                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
+                _auditLogService.Log(0, "REQUEST_SECTOR_CREATE_FAILED", "Sector", "0", "Fallo al crear sector: evento no encontrado - " + ex.Message);
                 return NotFound(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
+                _auditLogService.Log(0, "REQUEST_SECTOR_CREATE_FAILED", "Sector", "0", "Fallo al crear sector: " + ex.Message);
                 return Conflict(new { message = ex.Message });
             }
         }
@@ -60,9 +63,11 @@ namespace ReservAr.Controllers
 
             if (result == null)
             {
+                _auditLogService.Log(0, "REQUEST_SECTOR_UPDATE_PRICE_FAILED", "Sector", sectorId.ToString(), "Fallo al actualizar precio de sector: sector no encontrado - ID " + sectorId);
                 return NotFound(new { message = "Sector no encontrado." });
             }
 
+            _auditLogService.Log(0, "REQUEST_SECTOR_UPDATE_PRICE_SUCCESS", "Sector", sectorId.ToString(), "Precio de sector actualizado - ID " + sectorId);
             return Ok(result);
         }
 
@@ -78,6 +83,7 @@ namespace ReservAr.Controllers
 
             if (result == null)
             {
+                _auditLogService.Log(0, "REQUEST_SECTOR_GET_FAILED", "Sector", sectorId.ToString(), "Fallo al obtener sector: sector no encontrado - ID " + sectorId);
                 return NotFound(new { message = "Sector no encontrado." });
             }
 

@@ -15,10 +15,12 @@ namespace ReservAr.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuditLogService _auditLogService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IAuditLogService auditLogService)
         {
             _userService = userService;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -31,10 +33,12 @@ namespace ReservAr.Controllers
             var existingUser = await _userService.GetUserByEmailAsync(request.Email);
             if (existingUser != null)
             {
+                _auditLogService.Log(0, "REQUEST_USER_REGISTER_ERROR", "User", "0", "Fallo en el registro: email ya en uso - " + request.Email);
                 return BadRequest("Email already in use.");
             }
 
             var user = await _userService.CreateUserAsync(request.Name, request.Email, request.Password);
+            _auditLogService.Log(user.Id, "REQUEST_USER_REGISTER_SUCCESS", "User", user.Id.ToString(), "Registro exitoso - " + request.Email);
             return Ok(new { user.Id, user.Name, user.Email });
         }
     }

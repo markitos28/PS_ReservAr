@@ -1,4 +1,3 @@
-using ReservAr.Services;
 using ReservAr.Services.Interfaces;
 using ReservAr.Dtos.Users;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +15,13 @@ namespace ReservAr.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthenticationServices _authenticationServices;
+        private readonly IAuditLogService _auditLogService;
 
-        public AuthController(IUserService userService, IAuthenticationServices authenticationServices)
+        public AuthController(IUserService userService, IAuthenticationServices authenticationServices, IAuditLogService auditLogService)
         {
             _userService = userService;
             _authenticationServices = authenticationServices;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -33,16 +34,19 @@ namespace ReservAr.Controllers
             var user = await _userService.GetUserByEmailAsync(request.Email);
             if (user == null)
             {
+                _auditLogService.Log(0, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
                 return Unauthorized("Invalid email or password.");
             }
 
             var isValid = await _userService.ValidateUserCredentialsAsync(request.Email, request.Password);
             if (!isValid)
             {
+                _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_FAILED", "User", user.Id.ToString(), "Fallo de login: credenciales inválidas - " + request.Email);
                 return Unauthorized("Invalid email or password.");
             }
 
             var token = _authenticationServices.GenerateJwtToken(user);
+            _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_SUCCESS", "User", user.Id.ToString(), "Login exitoso - " + request.Email);
             return Ok(new
             {
                 access_token = token,
