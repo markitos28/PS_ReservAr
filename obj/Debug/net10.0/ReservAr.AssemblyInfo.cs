@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ReservAr")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ecd30c641058dc63f06c8b477ad639118fedb55c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98791b4ead203b595ea1e63899c15eb297f2e40a")]
 [assembly: System.Reflection.AssemblyProductAttribute("ReservAr")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ReservAr")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

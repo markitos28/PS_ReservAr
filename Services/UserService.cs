@@ -2,6 +2,7 @@ using ReservAr.Data;
 using ReservAr.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using ReservAr.Services.Interfaces;
 
 namespace ReservAr.Services
 {
