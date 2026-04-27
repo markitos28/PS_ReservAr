@@ -1,4 +1,4 @@
-const EVENT_API_BASE_URL = "http://localhost:5183/api/v1";
+const EVENT_API_BASE_URL = "http://localhost:5183/api/v1/event";
 const RESERVATIONS_PAGE_URL = "/reservations.html";
 
 const token = localStorage.getItem("jwtToken");

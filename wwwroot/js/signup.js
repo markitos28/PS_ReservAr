@@ -1,5 +1,5 @@
-const AUTH_API_BASE_URL = "http://localhost:5183/api/v1";
-const USER_API_BASE_URL = "http://localhost:5183/api/v1";
+const AUTH_API_BASE_URL = "http://localhost:5183/api/v1/auth";
+const USER_API_BASE_URL = "http://localhost:5183/api/v1/user";
 const HOME_PAGE_URL = "/index.html";
 
 const signupForm = document.getElementById("signupForm");
