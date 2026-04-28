@@ -1,11 +1,5 @@
-const EVENT_API_BASE_URL = "http://localhost:5183/api/v1/event";
+const EVENT_API_BASE_URL = "http://localhost:5183/api/v1";
 const RESERVATIONS_PAGE_URL = "/reservations.html";
-
-const token = localStorage.getItem("jwtToken");
-
-if (!token) {
-    window.location.href = "/login.html";
-}
 
 const searchNameInput = document.getElementById("searchName");
 const searchDateInput = document.getElementById("searchDate");
@@ -14,7 +8,6 @@ const searchVenueInput = document.getElementById("searchVenue");
 
 const searchButton = document.getElementById("searchButton");
 const clearButton = document.getElementById("clearButton");
-const logoutButton = document.getElementById("logoutButton");
 
 const eventsContainer = document.getElementById("eventsContainer");
 const loadingMessage = document.getElementById("loadingMessage");
@@ -22,6 +15,7 @@ const errorMessage = document.getElementById("errorMessage");
 const eventsCount = document.getElementById("eventsCount");
 
 document.addEventListener("DOMContentLoaded", async () => {
+    renderNavbar();
     setLoggedUserLabel();
     await loadEvents();
 });
@@ -38,28 +32,32 @@ clearButton.addEventListener("click", async () => {
     await loadEvents();
 });
 
-logoutButton.addEventListener("click", () => {
-    localStorage.removeItem("jwtToken");
-    localStorage.removeItem("loggedUser");
-
-    window.location.href = "/login.html";
-});
-
 async function loadEvents() {
     hideMessages();
     setLoading(true);
 
     try {
         const queryString = buildQueryString();
+        const token = localStorage.getItem("jwtToken");
+
+        const headers = {
+            "Content-Type": "application/json"
+        };
+
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
 
         const response = await fetch(`${EVENT_API_BASE_URL}/events${queryString}`, {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json"
-            }
+            headers: headers
         });
 
         const data = await parseJsonSafely(response);
+
+        if (response.status === 401) {
+            throw new Error("Necesitás iniciar sesión para ver los eventos.");
+        }
 
         if (!response.ok) {
             throw new Error(data?.message || data?.detail || "No se pudieron obtener los eventos.");
@@ -96,7 +94,6 @@ function buildQueryString() {
     }
 
     const query = params.toString();
-
     return query ? `?${query}` : "";
 }
 
@@ -110,7 +107,6 @@ function applyClientSideFilters(events) {
     return events.filter((idx_tk) => {
         const eventDate = new Date(idx_tk.eventDate);
         const eventTime = eventDate.toTimeString().slice(0, 5);
-
         return eventTime === selectedTime;
     });
 }
@@ -151,11 +147,48 @@ function renderEvents(events) {
         `;
 
         card.addEventListener("click", () => {
+            const token = localStorage.getItem("jwtToken");
+
+            if (!token) {
+                window.location.href = "/login.html";
+                return;
+            }
+
             window.location.href = `${RESERVATIONS_PAGE_URL}?eventId=${idx_tk.id}`;
         });
 
         eventsContainer.appendChild(card);
     }
+}
+
+function renderNavbar() {
+    const navActions = document.getElementById("navActions");
+    const token = localStorage.getItem("jwtToken");
+
+    if (!navActions) {
+        return;
+    }
+
+    if (token) {
+        navActions.innerHTML = `
+            <a href="/index.html" class="btn btn-outline">Home</a>
+            <button id="logoutButton" class="btn btn-logout">Logout</button>
+        `;
+
+        document.getElementById("logoutButton").addEventListener("click", () => {
+            localStorage.removeItem("jwtToken");
+            localStorage.removeItem("loggedUser");
+            window.location.href = "/index.html";
+        });
+
+        return;
+    }
+
+    navActions.innerHTML = `
+        <a href="/index.html" class="btn btn-outline">Home</a>
+        <a href="/login.html" class="btn btn-outline">Login</a>
+        <a href="/signup.html" class="btn btn-primary">Sign Up</a>
+    `;
 }
 
 function setLoggedUserLabel() {

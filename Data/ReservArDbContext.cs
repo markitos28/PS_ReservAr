@@ -208,7 +208,14 @@ namespace ReservAr.Data
 
             // Data seeding: Events
             modelBuilder.Entity<Event>().HasData(
-                new Event { Id = 1, Name = "Noche de Rock Amateur", EventDate = DateTime.ParseExact("16/06/2026 21:00:00", "dd/MM/yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture).ToUniversalTime(), Venue = "Niceto Club - CABA", Status = "Activo" }
+                new Event
+                {
+                    Id = 1,
+                    Name = "Noche de Rock Amateur",
+                    EventDate = new DateTime(2026, 6, 16, 21, 0, 0, DateTimeKind.Utc),
+                    Venue = "Niceto Club - CABA",
+                    Status = "DISPONIBLE"
+                }
             );
 
             //Data seeding: Sectors
