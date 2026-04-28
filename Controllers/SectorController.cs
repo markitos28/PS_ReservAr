@@ -15,9 +15,9 @@ namespace ReservAr.Controllers
     {
         private readonly ISectorService _sectorService;
         private readonly ILogger<SectorsController> _logger;
-        private readonly IAuditLogService _auditLogService;
+        private readonly IAuditLogServices _auditLogService;
 
-        public SectorsController(ISectorService sectorService, ILogger<SectorsController> logger, IAuditLogService auditLogService)
+        public SectorsController(ISectorService sectorService, ILogger<SectorsController> logger, IAuditLogServices auditLogService)
         {
             _sectorService = sectorService;
             _logger = logger;

@@ -15,9 +15,9 @@ namespace ReservAr.Controllers
     {
         private readonly IEventService _eventService;
         private readonly ILogger<EventsController> _logger;
-        private readonly IAuditLogService _auditLogService;
+        private readonly IAuditLogServices _auditLogService;
 
-        public EventsController(IEventService eventService,  IAuditLogService auditLogService, ILogger<EventsController> logger)
+        public EventsController(IEventService eventService,  IAuditLogServices auditLogService, ILogger<EventsController> logger)
         {
             _eventService = eventService;
             _logger = logger;
@@ -101,6 +101,8 @@ namespace ReservAr.Controllers
         /// <param name="eventDate"></param>
         /// <param name="venue"></param>
         /// <param name="status"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
         /// <returns></returns>
         [HttpGet]
         public async Task<IActionResult> Search(
@@ -108,11 +110,13 @@ namespace ReservAr.Controllers
             [FromQuery] string? name,
             [FromQuery] DateTime? eventDate,
             [FromQuery] string? venue,
-            [FromQuery] string? status)
+            [FromQuery] string? status,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10 )
         {
             try
             {
-                var result = await _eventService.SearchAsync(eventId, name, eventDate, venue, status);
+                var result = await _eventService.SearchAsync(eventId, name, eventDate, venue, status, pageNumber, pageSize);
                 return Ok(result);
             }
             catch (InvalidOperationException ex)

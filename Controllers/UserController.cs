@@ -15,9 +15,9 @@ namespace ReservAr.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IAuditLogService _auditLogService;
+        private readonly IAuditLogServices _auditLogService;
 
-        public UserController(IUserService userService, IAuditLogService auditLogService)
+        public UserController(IUserService userService, IAuditLogServices auditLogService)
         {
             _userService = userService;
             _auditLogService = auditLogService;

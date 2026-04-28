@@ -124,12 +124,14 @@ namespace ReservAr.Services
             return MapToResponse(entity);
         }
 
-        public async Task<List<EventResponse>> SearchAsync(
+        public async Task<PagedResponse<EventResponse>> SearchAsync(
             int? eventId,
             string? name,
             DateTime? eventDate,
             string? venue,
-            string? status)
+            string? status,
+            int pageNumber,
+            int pageSize)
         {
             var query = _context.Events
                 .AsNoTracking()
@@ -172,16 +174,15 @@ namespace ReservAr.Services
                 query = query.Where(evt => evt.Status.ToUpper() == normalizedStatus);
             }
 
-            var results = await query
+            var totalRecords = await query.CountAsync();
+
+            var items = await query
                 .OrderBy(evt => evt.EventDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            var response = new List<EventResponse>();
-
-            foreach (var idx_tk in results)
-            {
-                response.Add(MapToResponse(idx_tk));
-            }
+            var response = new PagedResponse<EventResponse>(items, totalRecords, pageNumber, pageSize);
 
             return response;
         }

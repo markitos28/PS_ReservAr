@@ -4,7 +4,7 @@ using ReservAr.Services.Interfaces;
 
 namespace ReservAr.Services
 {
-    public class AuditLogServices : IAuditLogService
+    public class AuditLogServices : IAuditLogServices
     {
         private readonly ReservArDbContext _dbContext;
 

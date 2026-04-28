@@ -15,9 +15,9 @@ namespace ReservAr.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthenticationServices _authenticationServices;
-        private readonly IAuditLogService _auditLogService;
+        private readonly IAuditLogServices _auditLogService;
 
-        public AuthController(IUserService userService, IAuthenticationServices authenticationServices, IAuditLogService auditLogService)
+        public AuthController(IUserService userService, IAuthenticationServices authenticationServices, IAuditLogServices auditLogService)
         {
             _userService = userService;
             _authenticationServices = authenticationServices;
