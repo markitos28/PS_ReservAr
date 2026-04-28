@@ -1,5 +1,5 @@
-const AUTH_API_BASE_URL = "https://localhost:5001/api/v1";
-const USER_API_BASE_URL = "https://localhost:5002/api/v1";
+const AUTH_API_BASE_URL = "http://localhost:5183/api/v1";
+const USER_API_BASE_URL = "http://localhost:5183/api/v1";
 const HOME_PAGE_URL = "/index.html";
 
 const loginForm = document.getElementById("loginForm");
@@ -64,7 +64,7 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 async function authenticateAgainstMsAuth(email, password) {
-  const response = await fetch(`${AUTH_API_BASE_URL}/auth/login`, {
+  const response = await fetch(`${AUTH_API_BASE_URL}/auth`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
