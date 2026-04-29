@@ -1,9 +1,12 @@
 const API_BASE_URL = "http://localhost:5183/api/v1";
 const LOGIN_PAGE_URL = "/login.html";
+const HOME_PAGE_URL = "/index.html";
 
 const token = localStorage.getItem("jwtToken");
 
-if (!token) {
+if (!token || isTokenExpired(token)) {
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("loggedUser");
     window.location.href = LOGIN_PAGE_URL;
 }
 
@@ -28,7 +31,6 @@ const timerBox = document.getElementById("timerBox");
 const timerValue = document.getElementById("timerValue");
 
 let sectors = [];
-let seats = [];
 let selectedSector = null;
 let selectedSeat = null;
 let activeReservation = null;
@@ -42,13 +44,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     await loadEvent();
-    await loadSectors();
+    await loadSectorsWithSeats();
 });
 
 logoutButton.addEventListener("click", () => {
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("loggedUser");
-    window.location.href = LOGIN_PAGE_URL;
+    window.location.href = HOME_PAGE_URL;
 });
 
 reserveButton.addEventListener("click", async () => {
@@ -65,10 +67,13 @@ cancelButton.addEventListener("click", () => {
 
 async function loadEvent() {
     try {
-        const response = await fetch(`${API_BASE_URL}/events/${eventId}`, {
-            method: "GET",
-            headers: buildAuthHeaders()
+        const response = await fetchWithAuth(`${API_BASE_URL}/events/${eventId}`, {
+            method: "GET"
         });
+
+        if (!response) {
+            return;
+        }
 
         const data = await parseJsonSafely(response);
 
@@ -83,15 +88,18 @@ async function loadEvent() {
     }
 }
 
-async function loadSectors() {
+async function loadSectorsWithSeats() {
     setLoading(true);
     hideMessages();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/sectors?eventId=${encodeURIComponent(eventId)}`, {
-            method: "GET",
-            headers: buildAuthHeaders()
+        const response = await fetchWithAuth(`${API_BASE_URL}/sectors?eventId=${encodeURIComponent(eventId)}`, {
+            method: "GET"
         });
+
+        if (!response) {
+            return;
+        }
 
         const data = await parseJsonSafely(response);
 
@@ -100,42 +108,36 @@ async function loadSectors() {
         }
 
         sectors = data || [];
-        renderSectors();
-    } catch (error) {
-        console.error("[CODE-ERROR] - Error al cargar sectores:", error);
-        showError(error.message || "No se pudieron cargar los sectores.");
-    } finally {
-        setLoading(false);
-    }
-}
 
-async function loadSeatsBySector(sectorId) {
-    setLoading(true);
-    hideMessages();
+        for (const idx_tk of sectors) {
+            const seatsResponse = await fetchWithAuth(`${API_BASE_URL}/seats?sectorId=${encodeURIComponent(idx_tk.id)}`, {
+                method: "GET"
+            });
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/seats?sectorId=${encodeURIComponent(sectorId)}`, {
-            method: "GET",
-            headers: buildAuthHeaders()
-        });
+            if (!seatsResponse) {
+                return;
+            }
 
-        const data = await parseJsonSafely(response);
+            const seatsData = await parseJsonSafely(seatsResponse);
 
-        if (!response.ok) {
-            throw new Error(data?.message || data?.detail || "No se pudieron obtener los asientos.");
+            if (!seatsResponse.ok) {
+                throw new Error(seatsData?.message || seatsData?.detail || "No se pudieron obtener los asientos.");
+            }
+
+            idx_tk.seats = (seatsData || []).filter((seat) => Number(seat.sectorId) === Number(idx_tk.id));
         }
 
-        seats = data || [];
-        renderSeats();
+        renderSectorsList();
+        renderSectorsMatrix();
     } catch (error) {
-        console.error("[CODE-ERROR] - Error al cargar asientos:", error);
-        showError(error.message || "No se pudieron cargar los asientos.");
+        console.error("[CODE-ERROR] - Error al cargar sectores y asientos:", error);
+        showError(error.message || "No se pudieron cargar los sectores y asientos.");
     } finally {
         setLoading(false);
     }
 }
 
-function renderSectors() {
+function renderSectorsList() {
     sectorsContainer.innerHTML = "";
 
     if (!sectors.length) {
@@ -143,7 +145,13 @@ function renderSectors() {
         return;
     }
 
-    for (const idx_tk of sectors) {
+    const orderedSectors = [...sectors].sort((a, b) => {
+        if (a.name.toLowerCase().includes("baja")) return -1;
+        if (b.name.toLowerCase().includes("baja")) return 1;
+        return 0;
+    });
+    
+    for (const idx_tk of orderedSectors) {
         const card = document.createElement("article");
         card.className = "sector-card";
         card.dataset.sectorId = idx_tk.id;
@@ -154,74 +162,130 @@ function renderSectors() {
             <p>Capacidad: ${idx_tk.capacity}</p>
         `;
 
-        card.addEventListener("click", async () => {
+        card.addEventListener("click", () => {
             selectedSector = idx_tk;
             selectedSeat = null;
             activeReservation = null;
-
+        
             document.querySelectorAll(".sector-card").forEach((idx_tk) => {
                 idx_tk.classList.remove("active");
             });
-
+        
             card.classList.add("active");
+        
             selectedSectorLabel.textContent = `Sector seleccionado: ${idx_tk.name}`;
             reserveButton.disabled = true;
             payButton.disabled = true;
             cancelButton.disabled = true;
-
+        
             stopTimer();
-            await loadSeatsBySector(idx_tk.id);
+        
+            renderSectorsMatrix();
+        
+            const selectedMatrix = document.querySelector(`.sector-matrix[data-sector-id="${idx_tk.id}"]`);
+        
+            if (selectedMatrix) {
+                selectedMatrix.classList.add("active");
+                selectedMatrix.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+            }
         });
 
         sectorsContainer.appendChild(card);
     }
 }
 
-function renderSeats() {
+function renderSectorsMatrix(onlySectorId = null) {
     seatsContainer.innerHTML = "";
 
-    if (!seats.length) {
-        seatsContainer.innerHTML = "<p>No hay asientos disponibles para este sector.</p>";
+    if (!sectors.length) {
+        seatsContainer.innerHTML = "<p>No hay sectores disponibles para este evento.</p>";
         return;
     }
 
-    for (const idx_tk of seats) {
-        const button = document.createElement("button");
-        button.type = "button";
-
-        const normalizedStatus = normalizeSeatStatus(idx_tk.status);
-        button.className = `seat ${normalizedStatus}`;
-        button.textContent = idx_tk.seatNumber;
-        button.title = `Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
-
-        if (normalizedStatus === "occupied") {
-            button.disabled = true;
-        }
-
-        button.addEventListener("click", () => {
-            if (normalizedStatus === "occupied") {
-                return;
-            }
-
-            selectedSeat = idx_tk;
-
-            document.querySelectorAll(".seat").forEach((idx_tk) => {
-                if (!idx_tk.classList.contains("occupied")) {
-                    idx_tk.classList.remove("selected");
-                    idx_tk.classList.add("available");
-                }
-            });
-
-            button.classList.remove("available");
-            button.classList.add("selected");
-
-            reserveButton.disabled = false;
-            cancelButton.disabled = false;
-            payButton.disabled = true;
-            hideMessages();
+    const sectorsToRender = onlySectorId
+        ? sectors.filter((idx_tk) => Number(idx_tk.id) === Number(onlySectorId))
+        : [...sectors].sort((a, b) => {
+            if (a.name.toLowerCase().includes("baja")) return -1;
+            if (b.name.toLowerCase().includes("baja")) return 1;
+            return a.name.localeCompare(b.name);
         });
 
-        seatsContainer.appendChild(button);
+    for (const idx_tk of sectorsToRender) {
+        const sectorBlock = document.createElement("section");
+        sectorBlock.className = "sector-matrix";
+        sectorBlock.dataset.sectorId = idx_tk.id;
+
+        const title = document.createElement("h3");
+        title.textContent = idx_tk.name;
+
+        const grid = document.createElement("div");
+        grid.className = "seats-grid";
+
+        const orderedSeats = [...(idx_tk.seats || [])]
+            .sort((a, b) => Number(a.seatNumber) - Number(b.seatNumber));
+
+        const seatsPerRow = 10;
+
+        for (let idx_tk = 0; idx_tk < orderedSeats.length; idx_tk += seatsPerRow) {
+            const rowSeats = orderedSeats.slice(idx_tk, idx_tk + seatsPerRow);
+
+            const rowDiv = document.createElement("div");
+            rowDiv.className = "seat-row";
+
+            for (const idx_tk of rowSeats) {
+                const button = document.createElement("button");
+                button.type = "button";
+
+                const normalizedStatus = normalizeSeatStatus(idx_tk.status);
+
+                button.className = `seat ${normalizedStatus}`;
+                button.textContent = idx_tk.seatNumber;
+                button.title = `Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
+
+                if (normalizedStatus === "occupied") {
+                    button.disabled = true;
+                }
+
+                button.addEventListener("click", () => {
+                    if (normalizedStatus === "occupied") {
+                        return;
+                    }
+
+                    selectedSeat = idx_tk;
+                    selectedSector = sectors.find((sector) => Number(sector.id) === Number(idx_tk.sectorId)) || null;
+
+                    document.querySelectorAll(".seat").forEach((seatButton) => {
+                        if (!seatButton.classList.contains("occupied")) {
+                            seatButton.classList.remove("selected");
+                            seatButton.classList.add("available");
+                        }
+                    });
+                    
+                    button.classList.remove("available");
+                    button.classList.remove("occupied");
+                    button.classList.add("selected");
+
+                    selectedSectorLabel.textContent =
+                        `Sector seleccionado: ${selectedSector?.name || "Sector"} - Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
+
+                    reserveButton.disabled = false;
+                    cancelButton.disabled = false;
+                    payButton.disabled = true;
+                    hideMessages();
+                });
+
+                rowDiv.appendChild(button);
+            }
+
+            grid.appendChild(rowDiv);
+        }
+
+        sectorBlock.appendChild(title);
+        sectorBlock.appendChild(grid);
+        seatsContainer.appendChild(sectorBlock);
     }
 }
 
@@ -237,14 +301,17 @@ async function reserveSelectedSeat() {
     try {
         const user = getLoggedUser();
 
-        const response = await fetch(`${API_BASE_URL}/reservations`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/reservations`, {
             method: "POST",
-            headers: buildAuthHeaders(),
             body: JSON.stringify({
                 userId: user?.id || user?.Id || 1,
                 seatId: selectedSeat.id
             })
         });
+
+        if (!response) {
+            return;
+        }
 
         const data = await parseJsonSafely(response);
 
@@ -263,24 +330,31 @@ async function reserveSelectedSeat() {
         payButton.disabled = false;
         cancelButton.disabled = false;
 
-        await loadSeatsBySector(selectedSector.id);
+        await loadSectorsWithSeats();
+
+        if (selectedSector) {
+            renderSectorsMatrix(selectedSector.id);
+        }
     } catch (error) {
         console.error("[CODE-ERROR] - Error al reservar asiento:", error);
         showError(error.message || "No se pudo reservar el asiento.");
-        await loadSeatsBySector(selectedSector.id);
+        await loadSectorsWithSeats();
     } finally {
         setLoading(false);
     }
 }
 
 async function patchSeatStatus(seatId, status) {
-    const response = await fetch(`${API_BASE_URL}/seats/${seatId}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/seats/${seatId}`, {
         method: "PATCH",
-        headers: buildAuthHeaders(),
         body: JSON.stringify({
             status: status
         })
     });
+
+    if (!response) {
+        return null;
+    }
 
     const data = await parseJsonSafely(response);
 
@@ -306,13 +380,16 @@ async function payReservation() {
             activeReservation.reservationId ||
             activeReservation.Id;
 
-        const response = await fetch(`${API_BASE_URL}/payments`, {
+        const response = await fetchWithAuth(`${API_BASE_URL}/payments`, {
             method: "POST",
-            headers: buildAuthHeaders(),
             body: JSON.stringify({
                 reservationId: reservationId
             })
         });
+
+        if (!response) {
+            return;
+        }
 
         const data = await parseJsonSafely(response);
 
@@ -331,7 +408,11 @@ async function payReservation() {
         payButton.disabled = true;
         cancelButton.disabled = true;
 
-        await loadSeatsBySector(selectedSector.id);
+        await loadSectorsWithSeats();
+
+        if (selectedSector) {
+            renderSectorsMatrix(selectedSector.id);
+        }
     } catch (error) {
         console.error("[CODE-ERROR] - Error al pagar reserva:", error);
         showError(error.message || "No se pudo procesar el pago.");
@@ -360,14 +441,18 @@ function startTimer() {
                 }
 
                 showError("La reserva expiró. El asiento volvió a estar disponible.");
+
                 activeReservation = null;
                 selectedSeat = null;
+
                 reserveButton.disabled = true;
                 payButton.disabled = true;
                 cancelButton.disabled = true;
 
+                await loadSectorsWithSeats();
+
                 if (selectedSector) {
-                    await loadSeatsBySector(selectedSector.id);
+                    renderSectorsMatrix(selectedSector.id);
                 }
             } catch (error) {
                 console.error("[CODE-ERROR] - Error al liberar asiento vencido:", error);
@@ -403,7 +488,13 @@ function clearSelection() {
     cancelButton.disabled = true;
 
     stopTimer();
-    renderSeats();
+
+    if (selectedSector) {
+        renderSectorsMatrix(selectedSector.id);
+    } else {
+        renderSectorsMatrix();
+    }
+
     hideMessages();
 }
 
@@ -418,10 +509,53 @@ function normalizeSeatStatus(status) {
 }
 
 function buildAuthHeaders() {
+    const currentToken = localStorage.getItem("jwtToken");
+
     return {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${currentToken}`
     };
+}
+
+async function fetchWithAuth(url, options = {}) {
+    const currentToken = localStorage.getItem("jwtToken");
+
+    if (!currentToken || isTokenExpired(currentToken)) {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("loggedUser");
+        window.location.href = LOGIN_PAGE_URL;
+        return null;
+    }
+
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+            "Authorization": `Bearer ${currentToken}`
+        }
+    });
+
+    if (response.status === 401) {
+        localStorage.removeItem("jwtToken");
+        localStorage.removeItem("loggedUser");
+        window.location.href = LOGIN_PAGE_URL;
+        return null;
+    }
+
+    return response;
+}
+
+function isTokenExpired(token) {
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const now = Math.floor(Date.now() / 1000);
+
+        return payload.exp < now;
+    } catch (error) {
+        console.error("[CODE-ERROR] - Error al validar expiración del token:", error);
+        return true;
+    }
 }
 
 function getLoggedUser() {

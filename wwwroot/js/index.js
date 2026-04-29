@@ -1,6 +1,33 @@
 const EVENT_API_BASE_URL = "http://localhost:5183/api/v1";
 const RESERVATIONS_PAGE_URL = "/reservations.html";
 
+function renderWelcomeUser() {
+    const welcome = document.getElementById("welcomeUser");
+    const userRaw = localStorage.getItem("loggedUser");
+
+    if (!welcome) {
+        console.error("No existe el elemento welcomeUser en el HTML.");
+        return;
+    }
+
+    if (!userRaw) {
+        welcome.textContent = "Eventos en cartelera";
+        return;
+    }
+
+    try {
+        const user = JSON.parse(userRaw);
+        const name = user.name || user.Name || user.fullName || user.email || user.Email;
+
+        if (name) {
+            welcome.textContent = `Bienvenido, ${name}`;
+        }
+    } catch (error) {
+        console.error("Error leyendo loggedUser:", error);
+        welcome.textContent = "Eventos en cartelera";
+    }
+}
+
 const searchNameInput = document.getElementById("searchName");
 const searchDateInput = document.getElementById("searchDate");
 const searchTimeInput = document.getElementById("searchTime");
@@ -16,6 +43,7 @@ const eventsCount = document.getElementById("eventsCount");
 
 document.addEventListener("DOMContentLoaded", async () => {
     renderNavbar();
+    renderWelcomeUser();
     setLoggedUserLabel();
     await loadEvents();
 });
@@ -246,3 +274,4 @@ function escapeHtml(value) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+

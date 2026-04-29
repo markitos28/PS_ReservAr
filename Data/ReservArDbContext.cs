@@ -159,6 +159,9 @@ namespace ReservAr.Data
                     .IsRequired()
                     .HasDefaultValue(0);
 
+                entity.HasIndex(e => new { e.SectorId, e.RowIdentifier, e.SeatNumber })
+                    .IsUnique();
+
                 entity.HasOne<Sector>()
                     .WithMany()
                     .HasForeignKey(e => e.SectorId)
