@@ -52,6 +52,7 @@ builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogServices>();
 builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
