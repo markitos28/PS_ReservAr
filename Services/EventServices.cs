@@ -30,9 +30,11 @@ namespace ReservAr.Services
                 throw new InvalidOperationException("Estado inválido. Valores permitidos: DISPONIBLE, SOLD-OUT, FINALIZADA.");
             }
 
+            var normalizedEventDate = DateTime.SpecifyKind(request.EventDate, DateTimeKind.Utc);
+
             var existingEvent = await _context.Events.AnyAsync(evt =>
                 evt.Name.ToLower() == normalizedName.ToLower() &&
-                evt.EventDate == request.EventDate
+                evt.EventDate == normalizedEventDate
             );
 
             if (existingEvent)
@@ -43,7 +45,7 @@ namespace ReservAr.Services
             var entity = new Event
             {
                 Name = normalizedName,
-                EventDate = request.EventDate,
+                EventDate = normalizedEventDate,
                 Venue = normalizedVenue,
                 Status = normalizedStatus
             };
@@ -71,7 +73,10 @@ namespace ReservAr.Services
                 return null;
             }
 
-            var newEventDate = request.EventDate ?? entity.EventDate;
+            var newEventDate = request.EventDate.HasValue
+                ? DateTime.SpecifyKind(request.EventDate.Value, DateTimeKind.Utc)
+                : entity.EventDate;
+
             var newVenue = request.Venue?.Trim() ?? entity.Venue;
             var newStatus = request.Status?.Trim().ToUpper() ?? entity.Status;
 
@@ -131,9 +136,11 @@ namespace ReservAr.Services
             string? venue,
             string? status)
         {
+            var today = DateTime.UtcNow.Date;
+
             var query = _context.Events
                 .AsNoTracking()
-                .Where(evt => evt.EventDate.Date >= DateTime.Today)
+                .Where(evt => evt.EventDate >= today)
                 .AsQueryable();
 
             if (eventId.HasValue)
@@ -149,12 +156,14 @@ namespace ReservAr.Services
 
             if (eventDate.HasValue)
             {
-                if (eventDate.Value.Date < DateTime.Today)
+                var requestedDate = DateTime.SpecifyKind(eventDate.Value.Date, DateTimeKind.Utc);
+
+                if (requestedDate < today)
                 {
                     throw new InvalidOperationException("EventDate solo permite consultar desde hoy hacia adelante.");
                 }
 
-                var fromDate = eventDate.Value.Date;
+                var fromDate = requestedDate;
                 var toDate = fromDate.AddDays(1);
 
                 query = query.Where(evt => evt.EventDate >= fromDate && evt.EventDate < toDate);
