@@ -1,5 +1,5 @@
-const AUTH_API_BASE_URL = "http://localhost:5183/api/v1/auth";
-const USER_API_BASE_URL = "http://localhost:5183/api/v1/user";
+const AUTH_API_BASE_URL = "http://localhost:5183/api/v1";
+const USER_API_BASE_URL = "http://localhost:5183/api/v1";
 const HOME_PAGE_URL = "/index.html";
 
 const signupForm = document.getElementById("signupForm");
@@ -58,7 +58,7 @@ signupForm.addEventListener("submit", async (event) => {
     });
 
     const authResponse = await authenticateAgainstMsAuth(email, password);
-    const token = authResponse.token || authResponse.jwt || authResponse.accessToken;
+    const token = authResponse.access_token || authResponse.token || authResponse.jwt || authResponse.accessToken;
 
     if (!token) {
       throw new Error("El login se realizó pero Authentication no devolvió un token.");
@@ -89,17 +89,23 @@ async function createUserInMsUser(userPayload) {
     body: JSON.stringify(userPayload)
   });
 
-  const data = await parseJsonSafely(response);
+  const data = await parseResponseSafely(response);
 
   if (!response.ok) {
-    throw new Error(data?.message || data?.detail || "No se pudo dar de alta el usuario.");
+    const message = getErrorMessage(data, response.status);
+
+    if (message.toLowerCase().includes("email already in use")) {
+      throw new Error("El email ya está registrado.");
+    }
+
+    throw new Error(message || "No se pudo dar de alta el usuario.");
   }
 
   return data;
 }
 
 async function authenticateAgainstMsAuth(email, password) {
-  const response = await fetch(`${AUTH_API_BASE_URL}/auth/login`, {
+  const response = await fetch(`${AUTH_API_BASE_URL}/auth`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -110,23 +116,41 @@ async function authenticateAgainstMsAuth(email, password) {
     })
   });
 
-  const data = await parseJsonSafely(response);
+  const data = await parseResponseSafely(response);
 
   if (!response.ok) {
-    throw new Error(data?.message || data?.detail || "No se pudo iniciar sesión luego del registro.");
+    throw new Error(getErrorMessage(data, response.status) || "No se pudo iniciar sesión luego del registro.");
   }
 
   return data;
 }
 
-async function parseJsonSafely(response) {
+async function parseResponseSafely(response) {
   const contentType = response.headers.get("content-type");
 
-  if (!contentType || !contentType.includes("application/json")) {
-    return null;
+  if (contentType && contentType.includes("application/json")) {
+    return await response.json();
   }
 
-  return await response.json();
+  const text = await response.text();
+
+  if (text) {
+    return { message: text };
+  }
+
+  return null;
+}
+
+function getErrorMessage(data, status) {
+  if (!data) {
+    return `Error HTTP ${status}`;
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  return data.message || data.detail || data.title || `Error HTTP ${status}`;
 }
 
 function togglePasswordVisibility(input, button) {

@@ -84,6 +84,12 @@ body {
     gap: 24px;
 }
 
+.sector-matrix.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+
 .panel {
     background: #ffffff;
     border-radius: 18px;
@@ -94,6 +100,19 @@ body {
 .panel h2 {
     font-size: 22px;
     margin-bottom: 14px;
+}
+
+.stage {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 18px;
+    padding: 12px;
+    background: #1e293b;
+    color: white;
+    border-radius: 10px 10px 28px 28px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    box-shadow: inset 0 -6px 12px rgba(255, 255, 255, 0.08);
 }
 
 .sectors-list {
@@ -161,6 +180,15 @@ body {
     gap: 6px;
 }
 
+.legend .seat {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    cursor: default;
+    pointer-events: none;
+    font-size: 0;
+}
+
 .seats-matrix-container {
     display: flex;
     flex-direction: column;
@@ -174,6 +202,7 @@ body {
     border-radius: 16px;
     padding: 18px;
     background: #f8fafc;
+    overflow-x: auto;
 }
 
 .sector-matrix h3 {
@@ -183,15 +212,97 @@ body {
 }
 
 .seats-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 44px);
+    display: flex;
+    flex-direction: column;
     gap: 10px;
+    align-items: center;
+    min-width: max-content;
 }
 
-@media (max-width: 650px) {
-    .seats-grid {
-        grid-template-columns: repeat(5, 44px);
-    }
+.seat-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.seat-row:nth-child(1) {
+    transform: translateX(0);
+}
+
+.seat-row:nth-child(2) {
+    transform: translateX(-8px);
+}
+
+.seat-row:nth-child(3) {
+    transform: translateX(-16px);
+}
+
+.seat-row:nth-child(4) {
+    transform: translateX(-8px);
+}
+
+.seat-row:nth-child(5) {
+    transform: translateX(0);
+}
+
+.seat {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    color: #ffffff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legend-seat {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.legend-seat.available {
+    background: #22c55e;
+}
+
+.legend-seat.occupied {
+    background: #ef4444;
+}
+
+.legend-seat.selected {
+    background: #facc15;
+}
+
+/* Disponible: verde */
+.seat.available {
+    background: #22c55e;
+}
+
+/* Ocupado / Reservado / Vendido: rojo */
+.seat.occupied {
+    background: #ef4444;
+    cursor: not-allowed;
+}
+
+/* Seleccionada: amarillo */
+.seat.selected {
+    background: #facc15;
+    color: #111827;
+}
+
+.seat.available:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 16px rgba(34, 197, 94, 0.25);
+}
+
+.seat.selected:hover {
+    transform: scale(1.08);
+    box-shadow: 0 8px 16px rgba(250, 204, 21, 0.25);
 }
 
 .actions {
@@ -233,13 +344,38 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .seats-grid {
-        grid-template-columns: repeat(5, 44px);
-    }
-
     .navbar {
         flex-direction: column;
         align-items: flex-start;
         gap: 14px;
+    }
+}
+
+@media (max-width: 650px) {
+    .reservation-page {
+        padding: 14px;
+    }
+
+    .nav-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .section-header {
+        flex-direction: column;
+    }
+
+    .seat {
+        width: 38px;
+        height: 38px;
+        font-size: 13px;
+    }
+
+    .seat-row {
+        gap: 8px;
     }
 }
