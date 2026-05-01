@@ -1,4 +1,3 @@
-using ReservAr.Services;
 using ReservAr.Services.Interfaces;
 using ReservAr.Dtos.Users;
 using Microsoft.AspNetCore.Mvc;
@@ -6,12 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ReservAr.Controllers
 {
-    /// <summary>
-    /// Controlador para gestionar los usuarios del sistema, incluyendo el registro de nuevos usuarios. Este controlador permite a los usuarios registrarse proporcionando su nombre, correo electrónico y contraseña. Si el correo electrónico ya está en uso, se devuelve un error adecuado. Si el registro es exitoso, se devuelve la información del usuario creado sin incluir la contraseña. Todas las acciones en este controlador permiten acceso sin autenticación, lo que permite a los usuarios registrarse sin necesidad de un token previo.
-    /// </summary>
     [ApiController]
     [Route("api/v1/users")]
-    [AllowAnonymous] // MNS: Permitir acceso sin autenticación para registrar y loguear usuarios
+    [AllowAnonymous]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -23,23 +19,55 @@ namespace ReservAr.Controllers
             _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Registra un nuevo usuario en el sistema. Se reciben los datos de registro, incluyendo el nombre, el correo electrónico y la contraseña. Si el correo electrónico ya está en uso, se devuelve un error de "Bad Request" con un mensaje adecuado. Si el registro es exitoso, se devuelve la información del usuario creado (ID, nombre y correo electrónico) sin incluir la contraseña.
-        /// </summary>
-        /// <param name="request">Datos de registro del usuario</param>
         [HttpPost]
         public async Task<IActionResult> Register([FromBody] UserRegisterDTO request)
         {
             var existingUser = await _userService.GetUserByEmailAsync(request.Email);
+
             if (existingUser != null)
             {
-                _auditLogService.Log(0, "REQUEST_USER_REGISTER_ERROR", "User", "0", "Fallo en el registro: email ya en uso - " + request.Email);
+                // No usamos UserId = 0 porque rompe la FK Audit_Log -> User.
+                // Usamos el Id del usuario existente.
+                _auditLogService.Log(
+                    existingUser.Id,
+                    "REQUEST_USER_REGISTER_ERROR",
+                    "User",
+                    existingUser.Id.ToString(),
+                    "Fallo en el registro: email ya en uso - " + request.Email
+                );
+
                 return BadRequest("Email already in use.");
             }
 
             var user = await _userService.CreateUserAsync(request.Name, request.Email, request.Password);
-            _auditLogService.Log(user.Id, "REQUEST_USER_REGISTER_SUCCESS", "User", user.Id.ToString(), "Registro exitoso - " + request.Email);
+
+            _auditLogService.Log(
+                user.Id,
+                "REQUEST_USER_REGISTER_SUCCESS",
+                "User",
+                user.Id.ToString(),
+                "Registro exitoso - " + request.Email
+            );
+
             return Ok(new { user.Id, user.Name, user.Email });
+        }
+
+        [HttpGet("by-email")]
+        public async Task<IActionResult> GetByEmail([FromQuery] string email)
+        {
+            var user = await _userService.GetUserByEmailAsync(email);
+
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuario no encontrado." });
+            }
+
+            return Ok(new
+            {
+                user.Id,
+                user.Name,
+                user.Email
+            });
         }
     }
 }

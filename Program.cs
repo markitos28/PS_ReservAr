@@ -52,6 +52,8 @@ builder.Services.AddScoped<IAuthenticationServices, AuthenticationServices>();
 builder.Services.AddScoped<ISectorService, SectorService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IAuditLogServices, AuditLogServices>();
+builder.Services.AddScoped<ISeatService, SeatService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -67,6 +69,7 @@ app.UseAuthorization();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseStaticFiles();
 app.UseCors("AllowAll");
 app.MapControllers();
 

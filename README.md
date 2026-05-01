@@ -26,6 +26,28 @@ dotnet restore
 ```
 
 ### 4. Configuración y Ejecución
+1. **Base de Datos**: 
+   - Asegúrate de que el servicio de PostgreSQL esté corriendo.
+   - Crea una base de datos o verifica que las credenciales en `appsettings.json` coincidan con tu instancia local (Usuario, Contraseña, Puerto).
+   - Por defecto, el proyecto busca el usuario `UARAT10` y la base `RA_Staging`.
+   - Ejecuta los siguientes comandos en tu terminal de PostgreSQL (`psql`) o herramienta de administración (como pgAdmin) para configurar el acceso:
+
+   ```sql
+   -- 1. Crear el usuario con la contraseña configurada
+   CREATE USER "UARAT10" WITH PASSWORD '6g1Se2"75mK8';
+
+   -- 2. Crear la base de datos asignando al usuario como dueño
+   CREATE DATABASE "RA_Staging" OWNER "UARAT10";
+
+   -- 3. Otorgar permisos completos para CRUD y gestión de tablas
+   GRANT ALL PRIVILEGES ON DATABASE "RA_Staging" TO "UARAT10";
+   -- Conectado a la base RA_Staging, otorga permisos sobre el esquema public:
+   \c "RA_Staging"
+   GRANT ALL ON SCHEMA public TO "UARAT10";
+   ```
+
+
+### 4. Configuración y Ejecución
 1. Asegúrate de configurar la cadena de conexión a la base de datos y la clave JWT en el archivo `appsettings.json`.
 2. Aplica las migraciones de la base de datos (si utilizas EF Core):
    ```bash

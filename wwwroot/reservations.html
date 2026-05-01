@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReservAr - Reservación</title>
+    <link rel="stylesheet" href="./css/reservations.css" />
+</head>
+<body>
+    <main class="reservation-page" data-sys-render="auto">
+        <header class="navbar">
+            <div>
+                <h1>ReservAr</h1>
+                <span id="eventTitle">Reservación</span>
+            </div>
+
+            <nav class="nav-actions">
+                <a href="/index.html" class="btn btn-outline">Home</a>
+                <button id="logoutButton" class="btn btn-logout">Logout</button>
+            </nav>
+        </header>
+
+        <section class="reservation-layout">
+            <aside class="panel">
+                <h2>Seleccionar sector</h2>
+                <div id="sectorsContainer" class="sectors-list"></div>
+            </aside>
+
+            <section class="panel">
+                <div class="section-header">
+                    <div>
+                        <h2>Seleccionar asiento</h2>
+                        <p id="selectedSectorLabel">Elegí un sector para ver sus butacas.</p>
+                    </div>
+
+                    <div id="timerBox" class="timer-box hidden">
+                        Tiempo restante: <strong id="timerValue">05:00</strong>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <span><i class="legend-seat available"></i> Disponible</span>
+                    <span><i class="legend-seat occupied"></i> Ocupado</span>
+                    <span><i class="legend-seat selected"></i> Seleccionada</span>
+                </div>
+
+                <div id="loadingMessage" class="loading-message hidden">Cargando...</div>
+                <div id="errorMessage" class="error-message hidden"></div>
+                <div id="successMessage" class="success-message hidden"></div>
+
+                <div class="stage">ESCENARIO</div>
+                <div id="seatsContainer" class="seats-matrix-container"></div>
+
+                <div class="actions">
+                    <button id="reserveButton" class="btn btn-primary" disabled>Reservar asiento</button>
+                    <button id="payButton" class="btn btn-pay" disabled>Pagar</button>
+                    <button id="cancelButton" class="btn btn-outline" disabled>Cancelar selección</button>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="./js/reservations.js"></script>
+</body>
+</html>

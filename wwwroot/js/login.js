@@ -39,16 +39,19 @@ loginForm.addEventListener("submit", async (event) => {
 
   try {
     const authResponse = await authenticateAgainstMsAuth(email, password);
-    const token = authResponse.token || authResponse.jwt || authResponse.accessToken;
+
+    const token = authResponse.access_token || authResponse.token || authResponse.Token || authResponse.jwt || authResponse.accessToken;
 
     if (!token) {
       throw new Error("El MS Authentication no devolvió un token JWT válido.");
     }
 
-    const userResponse = await fetchUserProfile(token, email);
+    //const userResponse = await fetchUserProfile(token, email);
 
+    //localStorage.setItem("jwtToken", token);
+    //localStorage.setItem("loggedUser", JSON.stringify(userResponse));
     localStorage.setItem("jwtToken", token);
-    localStorage.setItem("loggedUser", JSON.stringify(userResponse));
+    localStorage.setItem("loggedUser", JSON.stringify({ email: email }));
 
     showSuccess("Login exitoso. Redirigiendo...");
 
