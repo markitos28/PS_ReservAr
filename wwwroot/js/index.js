@@ -199,8 +199,8 @@ function renderNavbar() {
 
     if (token) {
         navActions.innerHTML = `
-            <a href="/index.html" class="btn btn-outline">Home</a>
-            <button id="logoutButton" class="btn btn-logout">Logout</button>
+            <a href="/index.html" class="btn btn-outline">Inicio</a>
+            <button id="logoutButton" class="btn btn-logout">Cerrar Sesíon</button>
         `;
 
         document.getElementById("logoutButton").addEventListener("click", () => {
@@ -213,9 +213,9 @@ function renderNavbar() {
     }
 
     navActions.innerHTML = `
-        <a href="/index.html" class="btn btn-outline">Home</a>
-        <a href="/login.html" class="btn btn-outline">Login</a>
-        <a href="/signup.html" class="btn btn-primary">Sign Up</a>
+        <a href="/index.html" class="btn btn-outline">Inicio</a>
+        <a href="/login.html" class="btn btn-outline">Iniciar Sesíon</a>
+        <a href="/signup.html" class="btn btn-primary">Registrarse</a>
     `;
 }
 
