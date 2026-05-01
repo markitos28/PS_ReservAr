@@ -6,8 +6,12 @@
 
 body {
     font-family: Arial, sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
+    min-height: 100vh;
+    color: #f8fafc;
+    background:
+        radial-gradient(circle at 20% 10%, rgba(236, 72, 153, 0.22), transparent 30%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.22), transparent 30%),
+        linear-gradient(135deg, #020617, #111827 55%, #1e1b4b);
 }
 
 .reservation-page {
@@ -15,24 +19,32 @@ body {
     padding: 24px;
 }
 
+.navbar,
+.panel {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 22px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(14px);
+}
+
 .navbar {
-    background: #ffffff;
-    border-radius: 18px;
     padding: 20px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     margin-bottom: 24px;
 }
 
 .navbar h1 {
-    font-size: 28px;
+    font-size: 32px;
+    color: #ffffff;
+    letter-spacing: 1px;
 }
 
 .navbar span {
     font-size: 14px;
-    color: #64748b;
+    color: #c4b5fd;
 }
 
 .nav-actions {
@@ -42,39 +54,46 @@ body {
 
 .btn {
     border: none;
-    border-radius: 10px;
-    padding: 11px 18px;
+    border-radius: 999px;
+    padding: 11px 20px;
     cursor: pointer;
     font-weight: bold;
     font-size: 14px;
     text-decoration: none;
     display: inline-block;
     text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
 }
 
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
 }
 
 .btn-primary {
-    background: #2563eb;
+    background: linear-gradient(135deg, #be185d, #6366f1);
     color: #ffffff;
+    box-shadow: 0 8px 18px rgba(190, 24, 93, 0.25);
 }
 
 .btn-outline {
-    background: #ffffff;
-    color: #2563eb;
-    border: 1px solid #2563eb;
+    background: transparent;
+    color: #f8fafc;
+    border: 1px solid rgba(248, 250, 252, 0.42);
 }
 
 .btn-logout {
-    background: #dc2626;
+    background: linear-gradient(135deg, #ef4444, #f97316);
     color: #ffffff;
 }
 
 .btn-pay {
-    background: #16a34a;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
     color: #ffffff;
 }
 
@@ -84,35 +103,28 @@ body {
     gap: 24px;
 }
 
-.sector-matrix.active {
-    border-color: #2563eb;
-    background: #eff6ff;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
-}
-
 .panel {
-    background: #ffffff;
-    border-radius: 18px;
     padding: 22px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 .panel h2 {
     font-size: 22px;
     margin-bottom: 14px;
+    color: #ffffff;
 }
 
 .stage {
     width: 100%;
     text-align: center;
     margin-bottom: 18px;
-    padding: 12px;
-    background: #1e293b;
+    padding: 13px;
+    background:
+        linear-gradient(135deg, rgba(190, 24, 93, 0.85), rgba(99, 102, 241, 0.85));
     color: white;
-    border-radius: 10px 10px 28px 28px;
+    border-radius: 10px 10px 30px 30px;
     font-weight: bold;
-    letter-spacing: 2px;
-    box-shadow: inset 0 -6px 12px rgba(255, 255, 255, 0.08);
+    letter-spacing: 3px;
+    box-shadow: 0 0 18px rgba(190, 24, 93, 0.25);
 }
 
 .sectors-list {
@@ -122,26 +134,34 @@ body {
 }
 
 .sector-card {
-    border: 1px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 16px;
+    padding: 15px;
     cursor: pointer;
-    background: #f8fafc;
+    background: rgba(2, 6, 23, 0.58);
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.sector-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(236, 72, 153, 0.55);
 }
 
 .sector-card.active {
-    border-color: #2563eb;
-    background: #eff6ff;
+    border-color: #ec4899;
+    background: rgba(236, 72, 153, 0.14);
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.14);
 }
 
 .sector-card h3 {
     font-size: 16px;
     margin-bottom: 6px;
+    color: #ffffff;
 }
 
 .sector-card p {
     font-size: 14px;
-    color: #64748b;
+    color: #cbd5e1;
 }
 
 .section-header {
@@ -153,15 +173,16 @@ body {
 }
 
 .section-header p {
-    color: #64748b;
+    color: #cbd5e1;
     font-size: 14px;
 }
 
 .timer-box {
-    background: #fef3c7;
-    color: #92400e;
+    background: rgba(250, 204, 21, 0.16);
+    color: #fde68a;
+    border: 1px solid rgba(250, 204, 21, 0.35);
     padding: 10px 14px;
-    border-radius: 12px;
+    border-radius: 999px;
     font-size: 14px;
 }
 
@@ -171,7 +192,7 @@ body {
     flex-wrap: wrap;
     margin-bottom: 18px;
     font-size: 14px;
-    color: #475569;
+    color: #cbd5e1;
 }
 
 .legend span {
@@ -180,13 +201,23 @@ body {
     gap: 6px;
 }
 
-.legend .seat {
+.legend-seat {
     width: 18px;
     height: 18px;
     border-radius: 5px;
-    cursor: default;
-    pointer-events: none;
-    font-size: 0;
+    display: inline-block;
+}
+
+.legend-seat.available {
+    background: #22c55e;
+}
+
+.legend-seat.occupied {
+    background: #ef4444;
+}
+
+.legend-seat.selected {
+    background: #facc15;
 }
 
 .seats-matrix-container {
@@ -198,17 +229,25 @@ body {
 }
 
 .sector-matrix {
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 20px;
     padding: 18px;
-    background: #f8fafc;
+    background:
+        linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.94));
     overflow-x: auto;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.sector-matrix.active {
+    border-color: #ec4899;
+    background: rgba(236, 72, 153, 0.10);
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.16);
 }
 
 .sector-matrix h3 {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     font-size: 18px;
-    color: #111827;
+    color: #ffffff;
 }
 
 .seats-grid {
@@ -248,7 +287,7 @@ body {
 .seat {
     width: 44px;
     height: 44px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: none;
     font-weight: bold;
     cursor: pointer;
@@ -259,50 +298,29 @@ body {
     justify-content: center;
 }
 
-.legend-seat {
-    width: 18px;
-    height: 18px;
-    border-radius: 5px;
-    display: inline-block;
-}
-
-.legend-seat.available {
-    background: #22c55e;
-}
-
-.legend-seat.occupied {
-    background: #ef4444;
-}
-
-.legend-seat.selected {
-    background: #facc15;
-}
-
 /* Disponible: verde */
 .seat.available {
     background: #22c55e;
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.18);
 }
 
 /* Ocupado / Reservado / Vendido: rojo */
 .seat.occupied {
     background: #ef4444;
     cursor: not-allowed;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.16);
 }
 
 /* Seleccionada: amarillo */
 .seat.selected {
     background: #facc15;
     color: #111827;
+    box-shadow: 0 8px 18px rgba(250, 204, 21, 0.28);
 }
 
-.seat.available:hover {
-    transform: scale(1.08);
-    box-shadow: 0 8px 16px rgba(34, 197, 94, 0.25);
-}
-
+.seat.available:hover,
 .seat.selected:hover {
     transform: scale(1.08);
-    box-shadow: 0 8px 16px rgba(250, 204, 21, 0.25);
 }
 
 .actions {
@@ -315,24 +333,27 @@ body {
 .error-message,
 .success-message {
     padding: 14px;
-    border-radius: 12px;
+    border-radius: 14px;
     margin-bottom: 16px;
     font-size: 14px;
 }
 
 .loading-message {
-    background: #eff6ff;
-    color: #1d4ed8;
+    background: rgba(59, 130, 246, 0.14);
+    color: #bfdbfe;
+    border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .error-message {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.14);
+    color: #fecaca;
+    border: 1px solid rgba(239, 68, 68, 0.28);
 }
 
 .success-message {
-    background: #dcfce7;
-    color: #15803d;
+    background: rgba(34, 197, 94, 0.14);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.28);
 }
 
 .hidden {
