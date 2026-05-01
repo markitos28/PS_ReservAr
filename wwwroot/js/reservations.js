@@ -47,9 +47,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadSectorsWithSeats();
 });
 
-logoutButton.addEventListener("click", () => {
+logoutButton.addEventListener("click", async () => {
+
+    let textMessage = "¿Desea cerrar sesión?";
+
+    if (activeReservation) {
+        textMessage = "Tenés una reserva activa. Si cerrás sesión, se perderá el asiento seleccionado.";
+    }
+
+    const result = await Swal.fire({
+        title: "Cerrar sesión",
+        text: textMessage,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cerrar sesión",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#22c55e",
+        background: "#0f172a",
+        color: "#f8fafc"
+    });
+
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    // Si hay reserva activa la libera antes
+    if (activeReservation) {
+        await releaseCurrentReservation();
+    }
+
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("loggedUser");
+
     window.location.href = HOME_PAGE_URL;
 });
 
@@ -373,6 +403,37 @@ async function reserveSelectedSeat() {
     }
 }
 
+async function releaseCurrentReservation() {
+    if (!activeReservation || !selectedSeat) {
+        return;
+    }
+
+    const reservationId =
+        activeReservation.id ||
+        activeReservation.reservationId ||
+        activeReservation.Id;
+
+    try {
+        if (reservationId) {
+            await fetchWithAuth(`${API_BASE_URL}/reservations/${reservationId}`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    status: "EXPIRADO"
+                })
+            });
+        }
+
+        await patchSeatStatus(selectedSeat.id, "Disponible");
+
+        activeReservation = null;
+        selectedSeat = null;
+
+        stopTimer();
+    } catch (error) {
+        console.error("[CODE-ERROR] - Error al liberar la reserva actual:", error);
+    }
+}
+
 async function patchSeatStatus(seatId, status) {
     const response = await fetchWithAuth(`${API_BASE_URL}/seats/${seatId}`, {
         method: "PATCH",
@@ -625,4 +686,42 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+document.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", async function (event) {
+        if (!activeReservation) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const canExit = await confirmExitWithReservation();
+
+        if (canExit) {
+            await releaseCurrentReservation();
+            window.location.href = link.href;
+        }
+    });
+});
+
+async function confirmExitWithReservation() {
+    if (!activeReservation) {
+        return true;
+    }
+
+    const result = await Swal.fire({
+        title: "Reserva en curso",
+        text: "Tenés una reserva activa. Si salís ahora, se liberará el asiento seleccionado.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, salir",
+        cancelButtonText: "No, quedarme",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#22c55e",
+        background: "#0f172a",
+        color: "#f8fafc"
+    });
+
+    return result.isConfirmed;
 }

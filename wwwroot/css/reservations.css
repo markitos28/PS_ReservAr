@@ -81,19 +81,19 @@ body {
     box-shadow: 0 8px 18px rgba(190, 24, 93, 0.25);
 }
 
-.btn-outline {
+.btn-outline-inicio {
     background: transparent;
     color: #f8fafc;
     border: 1px solid rgba(248, 250, 252, 0.42);
 }
 
-.btn-logout {
+.btn-outline {
+    color: #f8fafc;
     background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #ffffff;
 }
 
-.btn-pay {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
+.btn-logout {
+    background: linear-gradient(135deg, #ef4444, #f97316);
     color: #ffffff;
 }
 
