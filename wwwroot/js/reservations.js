@@ -47,9 +47,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadSectorsWithSeats();
 });
 
-logoutButton.addEventListener("click", () => {
+logoutButton.addEventListener("click", async () => {
+
+    let textMessage = "¿Desea cerrar sesión?";
+
+    if (activeReservation) {
+        textMessage = "Tenés una reserva activa. Si cerrás sesión, se perderá el asiento seleccionado.";
+    }
+
+    const result = await Swal.fire({
+        title: "Cerrar sesión",
+        text: textMessage,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cerrar sesión",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#22c55e",
+        background: "#0f172a",
+        color: "#f8fafc"
+    });
+
+    if (!result.isConfirmed) {
+        return;
+    }
+
+    // Si hay reserva activa la libera antes
+    if (activeReservation) {
+        await releaseCurrentReservation();
+    }
+
     localStorage.removeItem("jwtToken");
     localStorage.removeItem("loggedUser");
+
     window.location.href = HOME_PAGE_URL;
 });
 
@@ -93,6 +123,10 @@ async function loadSectorsWithSeats() {
     hideMessages();
 
     try {
+        await fetchWithAuth(`${API_BASE_URL}/reservations/expire-pending`, {
+            method: "PATCH"
+        });
+
         const response = await fetchWithAuth(`${API_BASE_URL}/sectors?eventId=${encodeURIComponent(eventId)}`, {
             method: "GET"
         });
@@ -129,6 +163,7 @@ async function loadSectorsWithSeats() {
 
         renderSectorsList();
         renderSectorsMatrix();
+        highlightSelectedSectorMatrix();
     } catch (error) {
         console.error("[CODE-ERROR] - Error al cargar sectores y asientos:", error);
         showError(error.message || "No se pudieron cargar los sectores y asientos.");
@@ -150,11 +185,15 @@ function renderSectorsList() {
         if (b.name.toLowerCase().includes("baja")) return 1;
         return 0;
     });
-    
+
     for (const idx_tk of orderedSectors) {
         const card = document.createElement("article");
         card.className = "sector-card";
         card.dataset.sectorId = idx_tk.id;
+
+        if (selectedSector && Number(selectedSector.id) === Number(idx_tk.id)) {
+            card.classList.add("active");
+        }
 
         card.innerHTML = `
             <h3>${escapeHtml(idx_tk.name)}</h3>
@@ -166,26 +205,26 @@ function renderSectorsList() {
             selectedSector = idx_tk;
             selectedSeat = null;
             activeReservation = null;
-        
+
             document.querySelectorAll(".sector-card").forEach((idx_tk) => {
                 idx_tk.classList.remove("active");
             });
-        
+
             card.classList.add("active");
-        
+
             selectedSectorLabel.textContent = `Sector seleccionado: ${idx_tk.name}`;
             reserveButton.disabled = true;
             payButton.disabled = true;
             cancelButton.disabled = true;
-        
+
             stopTimer();
-        
+
             renderSectorsMatrix();
-        
+            highlightSelectedSectorMatrix();
+
             const selectedMatrix = document.querySelector(`.sector-matrix[data-sector-id="${idx_tk.id}"]`);
-        
+
             if (selectedMatrix) {
-                selectedMatrix.classList.add("active");
                 selectedMatrix.scrollIntoView({
                     behavior: "smooth",
                     block: "center"
@@ -197,7 +236,7 @@ function renderSectorsList() {
     }
 }
 
-function renderSectorsMatrix(onlySectorId = null) {
+function renderSectorsMatrix() {
     seatsContainer.innerHTML = "";
 
     if (!sectors.length) {
@@ -205,13 +244,11 @@ function renderSectorsMatrix(onlySectorId = null) {
         return;
     }
 
-    const sectorsToRender = onlySectorId
-        ? sectors.filter((idx_tk) => Number(idx_tk.id) === Number(onlySectorId))
-        : [...sectors].sort((a, b) => {
-            if (a.name.toLowerCase().includes("baja")) return -1;
-            if (b.name.toLowerCase().includes("baja")) return 1;
-            return a.name.localeCompare(b.name);
-        });
+    const sectorsToRender = [...sectors].sort((a, b) => {
+        if (a.name.toLowerCase().includes("baja")) return -1;
+        if (b.name.toLowerCase().includes("baja")) return 1;
+        return a.name.localeCompare(b.name);
+    });
 
     for (const idx_tk of sectorsToRender) {
         const sectorBlock = document.createElement("section");
@@ -245,6 +282,11 @@ function renderSectorsMatrix(onlySectorId = null) {
                 button.textContent = idx_tk.seatNumber;
                 button.title = `Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
 
+                if (selectedSeat && selectedSeat.id === idx_tk.id && normalizedStatus !== "occupied") {
+                    button.classList.remove("available");
+                    button.classList.add("selected");
+                }
+
                 if (normalizedStatus === "occupied") {
                     button.disabled = true;
                 }
@@ -257,13 +299,13 @@ function renderSectorsMatrix(onlySectorId = null) {
                     selectedSeat = idx_tk;
                     selectedSector = sectors.find((sector) => Number(sector.id) === Number(idx_tk.sectorId)) || null;
 
-                    document.querySelectorAll(".seat").forEach((seatButton) => {
+                    document.querySelectorAll(".seats-grid .seat").forEach((seatButton) => {
                         if (!seatButton.classList.contains("occupied")) {
                             seatButton.classList.remove("selected");
                             seatButton.classList.add("available");
                         }
                     });
-                    
+
                     button.classList.remove("available");
                     button.classList.remove("occupied");
                     button.classList.add("selected");
@@ -274,6 +316,9 @@ function renderSectorsMatrix(onlySectorId = null) {
                     reserveButton.disabled = false;
                     cancelButton.disabled = false;
                     payButton.disabled = true;
+
+                    renderSectorsList();
+                    highlightSelectedSectorMatrix();
                     hideMessages();
                 });
 
@@ -286,6 +331,22 @@ function renderSectorsMatrix(onlySectorId = null) {
         sectorBlock.appendChild(title);
         sectorBlock.appendChild(grid);
         seatsContainer.appendChild(sectorBlock);
+    }
+}
+
+function highlightSelectedSectorMatrix() {
+    document.querySelectorAll(".sector-matrix").forEach((matrix) => {
+        matrix.classList.remove("active");
+    });
+
+    if (!selectedSector) {
+        return;
+    }
+
+    const selectedMatrix = document.querySelector(`.sector-matrix[data-sector-id="${selectedSector.id}"]`);
+
+    if (selectedMatrix) {
+        selectedMatrix.classList.add("active");
     }
 }
 
@@ -331,16 +392,45 @@ async function reserveSelectedSeat() {
         cancelButton.disabled = false;
 
         await loadSectorsWithSeats();
-
-        if (selectedSector) {
-            renderSectorsMatrix(selectedSector.id);
-        }
+        highlightSelectedSectorMatrix();
     } catch (error) {
         console.error("[CODE-ERROR] - Error al reservar asiento:", error);
         showError(error.message || "No se pudo reservar el asiento.");
         await loadSectorsWithSeats();
+        highlightSelectedSectorMatrix();
     } finally {
         setLoading(false);
+    }
+}
+
+async function releaseCurrentReservation() {
+    if (!activeReservation || !selectedSeat) {
+        return;
+    }
+
+    const reservationId =
+        activeReservation.id ||
+        activeReservation.reservationId ||
+        activeReservation.Id;
+
+    try {
+        if (reservationId) {
+            await fetchWithAuth(`${API_BASE_URL}/reservations/${reservationId}`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    status: "EXPIRADO"
+                })
+            });
+        }
+
+        await patchSeatStatus(selectedSeat.id, "Disponible");
+
+        activeReservation = null;
+        selectedSeat = null;
+
+        stopTimer();
+    } catch (error) {
+        console.error("[CODE-ERROR] - Error al liberar la reserva actual:", error);
     }
 }
 
@@ -409,10 +499,7 @@ async function payReservation() {
         cancelButton.disabled = true;
 
         await loadSectorsWithSeats();
-
-        if (selectedSector) {
-            renderSectorsMatrix(selectedSector.id);
-        }
+        highlightSelectedSectorMatrix();
     } catch (error) {
         console.error("[CODE-ERROR] - Error al pagar reserva:", error);
         showError(error.message || "No se pudo procesar el pago.");
@@ -450,10 +537,7 @@ function startTimer() {
                 cancelButton.disabled = true;
 
                 await loadSectorsWithSeats();
-
-                if (selectedSector) {
-                    renderSectorsMatrix(selectedSector.id);
-                }
+                highlightSelectedSectorMatrix();
             } catch (error) {
                 console.error("[CODE-ERROR] - Error al liberar asiento vencido:", error);
                 showError("La reserva expiró, pero no se pudo liberar el asiento.");
@@ -489,12 +573,8 @@ function clearSelection() {
 
     stopTimer();
 
-    if (selectedSector) {
-        renderSectorsMatrix(selectedSector.id);
-    } else {
-        renderSectorsMatrix();
-    }
-
+    renderSectorsMatrix();
+    highlightSelectedSectorMatrix();
     hideMessages();
 }
 
@@ -506,15 +586,6 @@ function normalizeSeatStatus(status) {
     }
 
     return "available";
-}
-
-function buildAuthHeaders() {
-    const currentToken = localStorage.getItem("jwtToken");
-
-    return {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${currentToken}`
-    };
 }
 
 async function fetchWithAuth(url, options = {}) {
@@ -615,4 +686,42 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+document.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", async function (event) {
+        if (!activeReservation) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const canExit = await confirmExitWithReservation();
+
+        if (canExit) {
+            await releaseCurrentReservation();
+            window.location.href = link.href;
+        }
+    });
+});
+
+async function confirmExitWithReservation() {
+    if (!activeReservation) {
+        return true;
+    }
+
+    const result = await Swal.fire({
+        title: "Reserva en curso",
+        text: "Tenés una reserva activa. Si salís ahora, se liberará el asiento seleccionado.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, salir",
+        cancelButtonText: "No, quedarme",
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#22c55e",
+        background: "#0f172a",
+        color: "#f8fafc"
+    });
+
+    return result.isConfirmed;
 }

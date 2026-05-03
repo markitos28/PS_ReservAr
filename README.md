@@ -1,59 +1,260 @@
-# PS_ReservAr
-Aplicación Web centrada en la administración y compra de eventos recreativos y de entretenimiento.
+# ReservAr
 
-## Guía de Inicio Rápido
+Sistema web para gestión de eventos, sectores, asientos, usuarios y reservaciones.
 
-Sigue estos pasos para configurar el entorno de desarrollo y ejecutar el proyecto localmente.
+---
 
-### 1. Requisitos Previos
-Antes de comenzar, asegúrate de tener instalado:
-- [**.NET SDK**](https://dotnet.microsoft.com/download) (Versión 8.0 o superior).
-- [**Git**](https://git-scm.com/).
+## 📋 Requisitos previos
 
-### 2. Descargar el Repositorio
-Clona el proyecto en tu máquina local utilizando el siguiente comando en tu terminal:
+- .NET SDK 10
+- PostgreSQL
+- Visual Studio Code o Visual Studio
+- Entity Framework CLI
 
-```bash
-git clone https://github.com/tu-usuario/PS_ReservAr.git
-cd ReservAr
-```
+Instalar Entity Framework CLI:
 
-### 3. Instalar Dependencias
-El proyecto utiliza varios paquetes NuGet (como Entity Framework Core y JWT). Para instalarlos todos automáticamente, ejecuta:
+bash
+dotnet tool install --global dotnet-ef
 
-```bash
+
+Si ya está instalado:
+
+bash
+dotnet tool update --global dotnet-ef
+
+
+---
+
+## 🗄️ Configurar base de datos
+
+Crear una base PostgreSQL:
+
+sql
+CREATE DATABASE "RA_Staging";
+
+
+Configurar la cadena de conexión en appsettings.json:
+
+json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=RA_Staging;Username=postgres;Password=TU_PASSWORD"
+  }
+}
+
+
+---
+
+## 📦 Restaurar dependencias
+
+bash
 dotnet restore
-```
-
-### 4. Configuración y Ejecución
-1. **Base de Datos**: 
-   - Asegúrate de que el servicio de PostgreSQL esté corriendo.
-   - Crea una base de datos o verifica que las credenciales en `appsettings.json` coincidan con tu instancia local (Usuario, Contraseña, Puerto).
-   - Por defecto, el proyecto busca el usuario `UARAT10` y la base `RA_Staging`.
-   - Ejecuta los siguientes comandos en tu terminal de PostgreSQL (`psql`) o herramienta de administración (como pgAdmin) para configurar el acceso:
-
-   ```sql
-   -- 1. Crear el usuario con la contraseña configurada
-   CREATE USER "UARAT10" WITH PASSWORD '6g1Se2"75mK8';
-
-   -- 2. Crear la base de datos asignando al usuario como dueño
-   CREATE DATABASE "RA_Staging" OWNER "UARAT10";
-
-   -- 3. Otorgar permisos completos para CRUD y gestión de tablas
-   GRANT ALL PRIVILEGES ON DATABASE "RA_Staging" TO "UARAT10";
-   -- Conectado a la base RA_Staging, otorga permisos sobre el esquema public:
-   \c "RA_Staging"
-   GRANT ALL ON SCHEMA public TO "UARAT10";
-   ```
 
 
-### 4. Configuración y Ejecución
-1. Asegúrate de configurar la cadena de conexión a la base de datos y la clave JWT en el archivo `appsettings.json`.
-2. Aplica las migraciones de la base de datos (si utilizas EF Core):
-   ```bash
-   dotnet ef database update
-   ```
-3. Inicia la aplicación:
-   ```bash
-   dotnet run
-   ```
+---
+
+## 🛠️ Compilar el proyecto
+
+bash
+dotnet build
+
+
+---
+
+## 🧱 Ejecutar migraciones
+
+Crear migración:
+
+bash
+dotnet ef migrations add InitialCreate
+
+
+Aplicar migraciones:
+
+bash
+dotnet ef database update
+
+
+---
+
+## ▶️ Ejecutar la aplicación
+
+bash
+dotnet run
+
+
+La aplicación se levanta en:
+
+
+http://localhost:5183
+
+
+---
+
+## 🌐 Accesos principales
+
+Frontend:
+
+
+http://localhost:5183/index.html
+http://localhost:5183/login.html
+http://localhost:5183/signup.html
+http://localhost:5183/reservations.html
+
+
+Swagger:
+
+
+http://localhost:5183/swagger/index.html
+
+
+---
+
+## 🔐 Autenticación
+
+Obtener token:
+
+http
+POST /api/v1/auth
+
+
+Body:
+
+json
+{
+  "email": "usuario@email.com",
+  "password": "password"
+}
+
+
+El token se guarda en localStorage como:
+
+
+jwtToken
+
+
+---
+
+## 📡 Endpoints principales
+
+### 👤 Users
+
+http
+POST /api/v1/users
+GET /api/v1/users/by-email?email=usuario@email.com
+
+
+---
+
+### 🎟️ Events
+
+http
+GET /api/v1/events
+GET /api/v1/events/{eventId}
+POST /api/v1/events
+PUT /api/v1/events/{eventId}
+
+
+---
+
+### 🏟️ Sectors
+
+http
+GET /api/v1/sectors?eventId=1
+GET /api/v1/sectors/{sectorId}
+POST /api/v1/sectors
+PUT /api/v1/sectors/{sectorId}/price
+
+
+---
+
+### 💺 Seats
+
+http
+GET /api/v1/seats?sectorId=1
+GET /api/v1/seats/{seatId}
+POST /api/v1/seats
+PATCH /api/v1/seats/{seatId}
+
+
+---
+
+### 🧾 Reservations
+
+http
+POST /api/v1/reservations
+GET /api/v1/reservations
+GET /api/v1/reservations/{reservationId}
+PATCH /api/v1/reservations/{reservationId}
+PATCH /api/v1/reservations/expire-pending
+
+
+---
+
+## 🔄 Flujo del sistema
+
+1. Registrarse en /signup.html
+2. Iniciar sesión en /login.html
+3. Seleccionar evento en /index.html
+4. Elegir sector y asiento
+5. Reservar asiento
+6. Se inicia un timer de 5 minutos
+7. Si no paga → reserva expira
+
+Liberar reservas vencidas:
+
+http
+PATCH /api/v1/reservations/expire-pending
+
+
+---
+
+## 🧠 Estados del sistema
+
+### Evento
+
+
+DISPONIBLE
+SOLD-OUT
+FINALIZADO
+
+
+### Asiento
+
+
+DISPONIBLE
+RESERVADO
+VENDIDO
+
+
+### Reserva
+
+
+PENDIENTE
+PAGANDO
+EXPIRADO
+
+
+---
+
+## ⚠️ Notas importantes
+
+- Las APIs protegidas requieren JWT
+- El token expira automáticamente
+- Si expira → redirige a login
+- El frontend usa localStorage
+- El endpoint expire-pending libera asientos automáticamente
+
+---
+
+## 🚀 Tips de desarrollo
+
+- Ejecutar expire-pending antes de cargar asientos
+- Usar Swagger para pruebas rápidas
+- Verificar estados en base de datos si algo no coincide
+
+---
+
+## 👨‍💻 Autor
+
+Proyecto desarrollado como sistema de gestión de eventos y reservas tipo Ticketek.

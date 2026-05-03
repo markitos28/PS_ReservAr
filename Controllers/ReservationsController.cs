@@ -77,6 +77,17 @@ namespace ReservAr.Controllers
             }
         }
 
+        [HttpPatch("expire-pending")]
+        public async Task<IActionResult> ExpirePending()
+        {
+            var expiredCount = await _reservationService.ExpirePendingReservationsAsync();
+
+            return Ok(new
+            {
+                expiredCount = expiredCount
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Search(
             [FromQuery] int? userId,

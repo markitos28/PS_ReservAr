@@ -14,5 +14,7 @@ namespace ReservAr.Services.Interfaces
             Guid? seatId,
             string? status
         );
+
+        Task<int> ExpirePendingReservationsAsync();
     }
 }

@@ -151,6 +151,35 @@ namespace ReservAr.Services
             return response;
         }
 
+        public async Task<int> ExpirePendingReservationsAsync()
+        {
+            var now = DateTime.UtcNow;
+
+            var expiredReservations = await _context.Reservations
+                .Where(reservation =>
+                    reservation.Status == ReservationStatus.Pendiente &&
+                    reservation.ExpiresAt <= now)
+                .ToListAsync();
+
+            foreach (var reservation in expiredReservations)
+            {
+                reservation.Status = ReservationStatus.Expirado;
+
+                var seat = await _context.Seats
+                    .FirstOrDefaultAsync(seat => seat.Id == reservation.SeatId);
+
+                if (seat != null && seat.Status.ToUpper() == "RESERVADO")
+                {
+                    seat.Status = "DISPONIBLE";
+                    seat.Version += 1;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return expiredReservations.Count;
+        }
+
         private static void ValidateReservationStatus(string status)
         {
             var validStatuses = new[]
