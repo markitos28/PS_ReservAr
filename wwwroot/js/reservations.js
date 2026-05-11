@@ -1,6 +1,8 @@
+const path = window.location.pathname;
+const PATH_PROJECT= path.substring(0, path.lastIndexOf('/'));
 const API_BASE_URL = "http://localhost:5183/api/v1";
-const LOGIN_PAGE_URL = "/login.html";
-const HOME_PAGE_URL = "/index.html";
+const LOGIN_PAGE_URL = `${PATH_PROJECT}/login.html`;
+const HOME_PAGE_URL = `${PATH_PROJECT}/index.html`;
 
 const token = localStorage.getItem("jwtToken");
 

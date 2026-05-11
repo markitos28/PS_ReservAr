@@ -6,13 +6,13 @@ namespace ReservAr.Dtos.Events
     /// </summary>
     public class PagedResponse<T>
     {
-        public List<Event> Items { get; set; }
+        public List<T> Items { get; set; }
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
         public int TotalPages { get; set; }
         public int TotalRecords { get; set; }
 
-        public PagedResponse(List<Event> items, int count, int pageNumber, int pageSize)
+        public PagedResponse(List<T> items, int count, int pageNumber, int pageSize)
         {
             PageNumber = pageNumber;
             PageSize = pageSize;

@@ -11,6 +11,8 @@ namespace ReservAr.Services
         private readonly ReservArDbContext _context;
         private readonly ILogger<EventService> _logger;
 
+        private static readonly string[] ValidStatuses = { "DISPONIBLE", "SOLD-OUT", "FINALIZADA" };
+
         public EventService(ReservArDbContext context, ILogger<EventService> logger)
         {
             _context = context;
@@ -19,25 +21,15 @@ namespace ReservAr.Services
 
         public async Task<EventResponse> CreateAsync(CreateEventRequest request)
         {
-            var normalizedName = request.Name.Trim();
-            var normalizedVenue = request.Venue.Trim();
-            var normalizedStatus = request.Status.Trim().ToUpper();
+            var normalizedName = NormalizeString(request.Name);
+            var normalizedVenue = NormalizeString(request.Venue);
+            var normalizedStatus = NormalizeString(request.Status).ToUpper();
 
-            var validStatuses = new[] { "DISPONIBLE", "SOLD-OUT", "FINALIZADA" };
-
-            if (!validStatuses.Contains(normalizedStatus))
-            {
-                throw new InvalidOperationException("Estado inválido. Valores permitidos: DISPONIBLE, SOLD-OUT, FINALIZADA.");
-            }
+            ValidateStatus(normalizedStatus);
 
             var normalizedEventDate = DateTime.SpecifyKind(request.EventDate, DateTimeKind.Utc);
 
-            var existingEvent = await _context.Events.AnyAsync(evt =>
-                evt.Name.ToLower() == normalizedName.ToLower() &&
-                evt.EventDate == normalizedEventDate
-            );
-
-            if (existingEvent)
+            if (await IsEventDuplicateAsync(normalizedName, normalizedEventDate))
             {
                 throw new InvalidOperationException("Ya existe un evento con el mismo nombre y la misma fecha/hora.");
             }
@@ -77,23 +69,12 @@ namespace ReservAr.Services
                 ? DateTime.SpecifyKind(request.EventDate.Value, DateTimeKind.Utc)
                 : entity.EventDate;
 
-            var newVenue = request.Venue?.Trim() ?? entity.Venue;
-            var newStatus = request.Status?.Trim().ToUpper() ?? entity.Status;
+            var newVenue = NormalizeString(request.Venue) ?? entity.Venue;
+            var newStatus = NormalizeString(request.Status)?.ToUpper() ?? entity.Status;
 
-            var validStatuses = new[] { "DISPONIBLE", "SOLD-OUT", "FINALIZADA" };
+            ValidateStatus(newStatus);
 
-            if (!validStatuses.Contains(newStatus))
-            {
-                throw new InvalidOperationException("Estado inválido. Valores permitidos: DISPONIBLE, SOLD-OUT, FINALIZADA.");
-            }
-
-            var duplicatedEvent = await _context.Events.AnyAsync(evt =>
-                evt.Id != eventId &&
-                evt.Name.ToLower() == entity.Name.ToLower() &&
-                evt.EventDate == newEventDate
-            );
-
-            if (duplicatedEvent)
+            if (await IsEventDuplicateAsync(entity.Name, newEventDate, eventId))
             {
                 throw new InvalidOperationException("La modificación genera un evento duplicado con el mismo nombre y fecha/hora.");
             }
@@ -145,6 +126,52 @@ namespace ReservAr.Services
                 .Where(evt => evt.EventDate >= today)
                 .AsQueryable();
 
+            ApplyFilters(ref query, eventId, name, eventDate, venue, status, today);
+
+            var totalRecords = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(evt => evt.EventDate)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var responseItems = items.Select(MapToResponse).ToList();
+
+            var response = new PagedResponse<EventResponse>(responseItems, totalRecords, pageNumber, pageSize);
+
+            return response;
+        }
+
+        private static void ValidateStatus(string status)
+        {
+            if (!ValidStatuses.Contains(status))
+            {
+                throw new InvalidOperationException("Estado inválido. Valores permitidos: DISPONIBLE, SOLD-OUT, FINALIZADA.");
+            }
+        }
+
+        private static string NormalizeString(string? value)
+        {
+            return value?.Trim() ?? "";
+        }
+
+        private async Task<bool> IsEventDuplicateAsync(string name, DateTime eventDate, int? excludeId = null)
+        {
+            var query = _context.Events.Where(evt =>
+                evt.Name.ToLower() == name.ToLower() &&
+                evt.EventDate == eventDate);
+
+            if (excludeId.HasValue)
+            {
+                query = query.Where(evt => evt.Id != excludeId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+
+        private void ApplyFilters(ref IQueryable<Event> query, int? eventId, string? name, DateTime? eventDate, string? venue, string? status, DateTime today)
+        {
             if (eventId.HasValue)
             {
                 query = query.Where(evt => evt.Id == eventId.Value);
@@ -152,7 +179,7 @@ namespace ReservAr.Services
 
             if (!string.IsNullOrWhiteSpace(name))
             {
-                var normalizedName = name.Trim().ToLower();
+                var normalizedName = NormalizeString(name).ToLower();
                 query = query.Where(evt => evt.Name.ToLower().Contains(normalizedName));
             }
 
@@ -173,27 +200,15 @@ namespace ReservAr.Services
 
             if (!string.IsNullOrWhiteSpace(venue))
             {
-                var normalizedVenue = venue.Trim().ToLower();
+                var normalizedVenue = NormalizeString(venue).ToLower();
                 query = query.Where(evt => evt.Venue.ToLower().Contains(normalizedVenue));
             }
 
             if (!string.IsNullOrWhiteSpace(status))
             {
-                var normalizedStatus = status.Trim().ToUpper();
+                var normalizedStatus = NormalizeString(status).ToUpper();
                 query = query.Where(evt => evt.Status.ToUpper() == normalizedStatus);
             }
-
-            var totalRecords = await query.CountAsync();
-
-            var items = await query
-                .OrderBy(evt => evt.EventDate)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            var response = new PagedResponse<EventResponse>(items, totalRecords, pageNumber, pageSize);
-
-            return response;
         }
 
         private static EventResponse MapToResponse(Event entity)
