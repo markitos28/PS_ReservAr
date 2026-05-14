@@ -34,7 +34,7 @@ namespace ReservAr.Controllers
             var user = await _userService.GetUserByEmailAsync(request.Email);
             if (user == null)
             {
-                _auditLogService.Log(0, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
+                _auditLogService.Log(-1, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
                 return Unauthorized("Invalid email or password.");
             }
 

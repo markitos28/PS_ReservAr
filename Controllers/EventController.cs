@@ -27,12 +27,12 @@ namespace ReservAr.Controllers
             try
             {
                 var result = await _eventService.CreateAsync(request);
-                _auditLogService.Log(0, "REQUEST_EVENT_CREATE", "Event", result.Id.ToString(), "Evento creado - " + result.Name);
+                _auditLogService.Log(-1, "REQUEST_EVENT_CREATE", "Event", result.Id.ToString(), "Evento creado - " + result.Name);
                 return CreatedAtAction(nameof(GetById), new { eventId = result.Id }, result);
             }
             catch (InvalidOperationException ex)
             {
-                _auditLogService.Log(0, "REQUEST_EVENT_CREATE_FAILED", "Event", "0", "Fallo al crear evento: " + request.Name + " - " + ex.Message);
+                _auditLogService.Log(-1, "REQUEST_EVENT_CREATE_FAILED", "Event", "0", "Fallo al crear evento: " + request.Name + " - " + ex.Message);
                 return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
@@ -51,7 +51,7 @@ namespace ReservAr.Controllers
 
                 if (result == null)
                 {
-                    _auditLogService.Log(0, "REQUEST_EVENT_UPDATE_FAILED", "Event", eventId.ToString(), "Fallo al actualizar evento: evento no encontrado - ID " + eventId);
+                    _auditLogService.Log(-1, "REQUEST_EVENT_UPDATE_FAILED", "Event", eventId.ToString(), "Fallo al actualizar evento: evento no encontrado - ID " + eventId);
                     return NotFound(new { message = "Evento no encontrado." });
                 }
 
@@ -59,7 +59,7 @@ namespace ReservAr.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                _auditLogService.Log(0, "REQUEST_EVENT_UPDATE_FAILED", "Event", eventId.ToString(), "Fallo al actualizar evento: " + ex.Message);
+                _auditLogService.Log(-1, "REQUEST_EVENT_UPDATE_FAILED", "Event", eventId.ToString(), "Fallo al actualizar evento: " + ex.Message);
                 return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
@@ -78,7 +78,7 @@ namespace ReservAr.Controllers
 
                 if (result == null)
                 {
-                    _auditLogService.Log(0, "REQUEST_EVENT_GET_FAILED", "Event", eventId.ToString(), "Fallo al obtener evento: evento no encontrado - ID " + eventId);
+                    _auditLogService.Log(-1, "REQUEST_EVENT_GET_FAILED", "Event", eventId.ToString(), "Fallo al obtener evento: evento no encontrado - ID " + eventId);
                     return NotFound(new { message = "Evento no encontrado." });
                 }
 
@@ -120,13 +120,13 @@ namespace ReservAr.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                _auditLogService.Log(0, "REQUEST_EVENT_SEARCH_FAILED", "Event", "0", "Fallo al buscar eventos: " + ex.Message);
+                _auditLogService.Log(-1, "REQUEST_EVENT_SEARCH_FAILED", "Event", "0", "Fallo al buscar eventos: " + ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al buscar eventos.");
-                _auditLogService.Log(0, "REQUEST_EVENT_SEARCH_ERROR", "Event", "0", "Error inesperado al buscar eventos: " + ex.Message);
+                _auditLogService.Log(-1, "REQUEST_EVENT_SEARCH_ERROR", "Event", "0", "Error inesperado al buscar eventos: " + ex.Message);
                 return StatusCode(500, new { message = "Error interno al buscar eventos.", detail = ex.InnerException?.Message ?? ex.Message });
             }
         }

@@ -35,8 +35,11 @@ const timerValue = document.getElementById("timerValue");
 let sectors = [];
 let selectedSector = null;
 let selectedSeat = null;
+let selectedSeats = [];
+let seatsCount = 0;
 let activeReservation = null;
 let timerInterval = null;
+let postPaymentCountdownInterval = null;
 let remainingSeconds = 300;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -206,6 +209,8 @@ function renderSectorsList() {
         card.addEventListener("click", () => {
             selectedSector = idx_tk;
             selectedSeat = null;
+            selectedSeats = [];
+            seatsCount = 0;
             activeReservation = null;
 
             document.querySelectorAll(".sector-card").forEach((idx_tk) => {
@@ -284,7 +289,7 @@ function renderSectorsMatrix() {
                 button.textContent = idx_tk.seatNumber;
                 button.title = `Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
 
-                if (selectedSeat && selectedSeat.id === idx_tk.id && normalizedStatus !== "occupied") {
+                if (selectedSeats.some((seat) => seat.id === idx_tk.id) && normalizedStatus !== "occupied") {
                     button.classList.remove("available");
                     button.classList.add("selected");
                 }
@@ -298,29 +303,36 @@ function renderSectorsMatrix() {
                         return;
                     }
 
-                    selectedSeat = idx_tk;
-                    selectedSector = sectors.find((sector) => Number(sector.id) === Number(idx_tk.sectorId)) || null;
+                    const isAlreadySelected = selectedSeats.some((seat) => seat.id === idx_tk.id);
 
-                    document.querySelectorAll(".seats-grid .seat").forEach((seatButton) => {
-                        if (!seatButton.classList.contains("occupied")) {
-                            seatButton.classList.remove("selected");
-                            seatButton.classList.add("available");
-                        }
-                    });
+                    if (isAlreadySelected) {
+                        selectedSeats = selectedSeats.filter((seat) => seat.id !== idx_tk.id);
+                        seatsCount--;
+                        button.classList.remove("selected");
+                        button.classList.add("available");
+                    } else {
+                        selectedSeats.push(idx_tk);
+                        seatsCount++;
+                        selectedSeat = idx_tk;
+                        selectedSector = sectors.find((sector) => Number(sector.id) === Number(idx_tk.sectorId)) || null;
+                        button.classList.remove("available");
+                        button.classList.add("selected");
+                    }
 
-                    button.classList.remove("available");
-                    button.classList.remove("occupied");
-                    button.classList.add("selected");
+                    if (selectedSeats.length === 0) {
+                        selectedSeat = null;
+                        selectedSectorLabel.textContent = `Elegí un sector para ver sus butacas.`;
+                        reserveButton.disabled = true;
+                        payButton.disabled = true;
+                        cancelButton.disabled = true;
+                    } else {
+                        selectedSectorLabel.textContent =
+                            `${seatsCount} asiento(s) seleccionado(s)`;
+                        reserveButton.disabled = false;
+                        cancelButton.disabled = false;
+                        payButton.disabled = true;
+                    }
 
-                    selectedSectorLabel.textContent =
-                        `Sector seleccionado: ${selectedSector?.name || "Sector"} - Fila ${idx_tk.rowIdentifier} - Asiento ${idx_tk.seatNumber}`;
-
-                    reserveButton.disabled = false;
-                    cancelButton.disabled = false;
-                    payButton.disabled = true;
-
-                    renderSectorsList();
-                    highlightSelectedSectorMatrix();
                     hideMessages();
                 });
 
@@ -440,7 +452,7 @@ async function patchSeatStatus(seatId, status) {
     const response = await fetchWithAuth(`${API_BASE_URL}/seats/${seatId}`, {
         method: "PATCH",
         body: JSON.stringify({
-            status: status
+            Status: status
         })
     });
 
@@ -455,59 +467,6 @@ async function patchSeatStatus(seatId, status) {
     }
 
     return data;
-}
-
-async function payReservation() {
-    if (!activeReservation) {
-        showError("No hay una reserva activa para pagar.");
-        return;
-    }
-
-    setLoading(true);
-    hideMessages();
-
-    try {
-        const reservationId =
-            activeReservation.id ||
-            activeReservation.reservationId ||
-            activeReservation.Id;
-
-        const response = await fetchWithAuth(`${API_BASE_URL}/payments`, {
-            method: "POST",
-            body: JSON.stringify({
-                reservationId: reservationId
-            })
-        });
-
-        if (!response) {
-            return;
-        }
-
-        const data = await parseJsonSafely(response);
-
-        if (!response.ok) {
-            throw new Error(data?.message || data?.detail || "No se pudo procesar el pago.");
-        }
-
-        await patchSeatStatus(selectedSeat.id, "Vendido");
-
-        stopTimer();
-        showSuccess("Pago realizado correctamente. Asiento vendido.");
-
-        activeReservation = null;
-        selectedSeat = null;
-        reserveButton.disabled = true;
-        payButton.disabled = true;
-        cancelButton.disabled = true;
-
-        await loadSectorsWithSeats();
-        highlightSelectedSectorMatrix();
-    } catch (error) {
-        console.error("[CODE-ERROR] - Error al pagar reserva:", error);
-        showError(error.message || "No se pudo procesar el pago.");
-    } finally {
-        setLoading(false);
-    }
 }
 
 function startTimer() {
@@ -567,6 +526,8 @@ function updateTimerText() {
 
 function clearSelection() {
     selectedSeat = null;
+    selectedSeats = [];
+    seatsCount = 0;
     activeReservation = null;
 
     reserveButton.disabled = true;
@@ -599,7 +560,7 @@ async function fetchWithAuth(url, options = {}) {
         window.location.href = LOGIN_PAGE_URL;
         return null;
     }
-
+    
     const response = await fetch(url, {
         ...options,
         headers: {
@@ -726,4 +687,120 @@ async function confirmExitWithReservation() {
     });
 
     return result.isConfirmed;
+}
+
+function showPaymentSuccess(payment) {
+    if (postPaymentCountdownInterval) {
+        clearInterval(postPaymentCountdownInterval);
+        postPaymentCountdownInterval = null;
+    }
+
+    let countdownSeconds = 30;
+
+    successMessage.innerHTML = `
+        <div class="payment-success">
+            <h3>Pago realizado correctamente</h3>
+            <p>Detalles del pago:</p>
+            <ul>
+                <li><strong>TransactionId:</strong> ${escapeHtml(payment.transactionId)}</li>
+                <li><strong>UserId:</strong> ${escapeHtml(payment.userId)}</li>
+                <li><strong>EventId:</strong> ${escapeHtml(payment.eventId)}</li>
+                <li><strong>SectorId:</strong> ${escapeHtml(payment.sectorId)}</li>
+                <li><strong>Amount:</strong> ${escapeHtml(payment.amount)}</li>
+                <li><strong>Currency:</strong> ${escapeHtml(payment.currency)}</li>
+                <li><strong>Message:</strong> ${escapeHtml(payment.message)}</li>
+                <li><strong>Success:</strong> ${escapeHtml(payment.success)}</li>
+            </ul>
+            <p id="paymentCountdown">Serás redirigido a la página principal en ${countdownSeconds} segundos.</p>
+        </div>
+    `;
+    successMessage.classList.remove("hidden");
+
+    const countdownElement = successMessage.querySelector("#paymentCountdown");
+
+    postPaymentCountdownInterval = setInterval(() => {
+        countdownSeconds -= 1;
+
+        if (countdownElement) {
+            countdownElement.textContent = `Serás redirigido a la página principal en ${countdownSeconds} segundos.`;
+        }
+
+        if (countdownSeconds <= 0) {
+            clearInterval(postPaymentCountdownInterval);
+            postPaymentCountdownInterval = null;
+            window.location.href = HOME_PAGE_URL;
+        }
+    }, 1000);
+}
+
+async function payReservation() {
+    if (!activeReservation) {
+        showError("No hay una reserva activa para pagar.");
+        return;
+    }
+
+    if (!selectedSector || selectedSeats.length === 0) {
+        showError("No se encontró el sector o los asientos seleccionados.");
+        return;
+    }
+
+    const user = getLoggedUser();
+
+    if (!user) {
+        showError("No se encontró el usuario logueado.");
+        return;
+    }
+
+    setLoading(true);
+    hideMessages();
+
+    try {
+        const paymentRequest = {
+            eventId: parseInt(eventId),
+            sectorId: selectedSector.id,
+            quantitySeat: seatsCount,
+            userId: user.id || user.Id || 0,
+            amount: (selectedSector.price ?? 0) * seatsCount,
+            currency: "ARS"
+        };
+
+        const response = await fetchWithAuth(`${API_BASE_URL}/payments`, {
+            method: "POST",
+            body: JSON.stringify(paymentRequest)
+        });
+
+        if (!response) {
+            return;
+        }
+
+        const data = await parseJsonSafely(response);
+
+        if (!response.ok) {
+            throw new Error(data?.message || data?.detail || "No se pudo procesar el pago.");
+        }
+
+        for (const seat of selectedSeats) {
+            await patchSeatStatus(seat.id, "Vendido");
+        }
+
+        stopTimer();
+        showPaymentSuccess(data);
+
+        activeReservation = null;
+        selectedSeat = null;
+        selectedSeats = [];
+        seatsCount = 0;
+        reserveButton.disabled = true;
+        payButton.disabled = true;
+        cancelButton.disabled = true;
+        
+        //await loadSectorsWithSeats();
+        //highlightSelectedSectorMatrix();
+        
+    } catch (error) {
+        console.error("[CODE-ERROR] - Error al pagar reserva:", error);
+        showError(error.message || "No se pudo procesar el pago.");
+    } finally {
+        setLoading(false);
+    }
 }
