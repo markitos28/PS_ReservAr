@@ -358,7 +358,7 @@ function renderSectorsMatrix() {
                     button.disabled = true;
                 }
 
-                button.addEventListener("click", () => {
+                button.addEventListener("click", async () => {
                     if (normalizedStatus === "occupied") {
                         return;
                     }
@@ -377,6 +377,10 @@ function renderSectorsMatrix() {
                             showError(`Ya tienes ${desiredSeatCount} asiento(s) seleccionado(s). Máximo permitido.`);
                             return;
                         }
+
+                        // Intentar reservar en Backend para manejar concurrencia
+                        const reserved = await tryReserveSeat(idx_tk);
+                        if (!reserved) return;
 
                         // Seleccionar asiento
                         selectedSeats.push(idx_tk);
@@ -401,6 +405,39 @@ function renderSectorsMatrix() {
         sectorBlock.appendChild(title);
         sectorBlock.appendChild(grid);
         seatsContainer.appendChild(sectorBlock);
+    }
+}
+
+async function tryReserveSeat(seat) {
+    const user = getLoggedUser();
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/reservations`, {
+            method: "POST",
+            body: JSON.stringify({ userId: user.id || 1, seatId: seat.id })
+        });
+
+        if (response.status === 409) {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Asiento ya no disponible',
+                text: 'Otro usuario lo reservó milisegundos antes.',
+                showConfirmButton: false,
+                timer: 4000
+            });
+            await loadSectorsWithSeats(); // Refrescar mapa instantáneamente
+            return false;
+        }
+
+        if (!response.ok) throw new Error("Error al reservar.");
+        
+        activeReservation = await response.json();
+        startTimer(); // Iniciar contador visual de 5:00
+        return true;
+    } catch (error) {
+        showError("No se pudo procesar la reserva.");
+        return false;
     }
 }
 
@@ -768,13 +805,15 @@ async function payReservation() {
         }
 
         const user = userData || {};
-        console.log("Usuario obtenido para pago:", user);
+
+        const reservationId = activeReservation.id || activeReservation.reservationId || activeReservation.Id;
 
         const paymentRequest = {
             eventId: parseInt(eventId),
             sectorId: selectedSector.id,
             quantitySeat: selectedSeats.length,
             userId: user.id || user.Id || 0,
+            reservationId: reservationId,
             amount: (selectedSector.price ?? 0) * selectedSeats.length,
             currency: "ARS"
         };
@@ -792,11 +831,6 @@ async function payReservation() {
 
         if (!response.ok) {
             throw new Error(data?.message || data?.detail || "No se pudo procesar el pago.");
-        }
-
-        // Actualizar estado de todos los asientos a "Vendido"
-        for (const seat of selectedSeats) {
-            await patchSeatStatus(seat.id, "Vendido");
         }
 
         stopTimer();

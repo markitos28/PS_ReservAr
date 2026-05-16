@@ -16,5 +16,7 @@ namespace ReservAr.Services.Interfaces
         );
 
         Task<int> ExpirePendingReservationsAsync();
+
+        Task ProcessPaymentAsync(int userId, Guid reservationId);
     }
 }

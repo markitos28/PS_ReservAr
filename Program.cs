@@ -56,6 +56,9 @@ builder.Services.AddScoped<ISeatService, SeatService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IPaymentServices, PaymentServices>();
 
+// Registro del Background Job para auto-mantenimiento de reservas
+builder.Services.AddHostedService<ReservationExpiryWorker>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -75,5 +78,3 @@ app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run();
-
-
