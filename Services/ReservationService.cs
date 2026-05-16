@@ -20,58 +20,67 @@ namespace ReservAr.Services
 
         public async Task<ReservationResponse> CreateAsync(CreateReservationRequest request)
         {
-            var userExists = await _context.Users.AnyAsync(user => user.Id == request.UserId);
-
-            if (!userExists)
-            {
-                throw new KeyNotFoundException("El usuario indicado no existe.");
-            }
-
-            var seat = await _context.Seats.FirstOrDefaultAsync(seat => seat.Id == request.SeatId);
-
-            if (seat == null)
-            {
-                throw new KeyNotFoundException("El asiento indicado no existe.");
-            }
-
-            if (seat.Status.ToUpper() != "DISPONIBLE")
-            {
-                throw new InvalidOperationException("El asiento no está disponible.");
-            }
-
-            var activeReservationExists = await _context.Reservations.AnyAsync(reservation =>
-                reservation.SeatId == request.SeatId &&
-                reservation.Status == ReservationStatus.Pendiente &&
-                reservation.ExpiresAt > DateTime.UtcNow
-            );
-
-            if (activeReservationExists)
-            {
-                throw new InvalidOperationException("El asiento ya tiene una reserva pendiente activa.");
-            }
-
-            var reservation = new Reservation
-            {
-                Id = Guid.NewGuid(),
-                UserId = request.UserId,
-                SeatId = request.SeatId,
-                Status = ReservationStatus.Pendiente,
-                ReservedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
-            };
-
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
+                var userExists = await _context.Users.AnyAsync(user => user.Id == request.UserId);
+
+                if (!userExists)
+                {
+                    throw new KeyNotFoundException("El usuario indicado no existe.");
+                }
+
+                var seat = await _context.Seats.FirstOrDefaultAsync(seat => seat.Id == request.SeatId);
+
+                if (seat == null)
+                {
+                    throw new KeyNotFoundException("El asiento indicado no existe.");
+                }
+
+                if (seat.Status.ToUpper() != "DISPONIBLE")
+                {
+                    throw new InvalidOperationException("El asiento no está disponible.");
+                }
+
+                var activeReservationExists = await _context.Reservations.AnyAsync(reservation =>
+                    reservation.SeatId == request.SeatId &&
+                    reservation.Status == ReservationStatus.Pendiente &&
+                    reservation.ExpiresAt > DateTime.UtcNow
+                );
+
+                if (activeReservationExists)
+                {
+                    throw new InvalidOperationException("El asiento ya tiene una reserva pendiente activa.");
+                }
+
+                var reservation = new Reservation
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = request.UserId,
+                    SeatId = request.SeatId,
+                    Status = ReservationStatus.Pendiente,
+                    ReservedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+                };
+
                 seat.Status = "RESERVADO";
                 seat.Version += 1;
 
                 _context.Reservations.Add(reservation);
                 await _context.SaveChangesAsync();
 
+                await transaction.CommitAsync();
+
                 return MapToResponse(reservation);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("El asiento fue modificado por otro proceso. Por favor, intente nuevamente.");
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "[CODE-ERROR] - Error al crear la reserva.");
                 throw;
             }
@@ -154,30 +163,46 @@ namespace ReservAr.Services
         public async Task<int> ExpirePendingReservationsAsync()
         {
             var now = DateTime.UtcNow;
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            var expiredReservations = await _context.Reservations
-                .Where(reservation =>
-                    reservation.Status == ReservationStatus.Pendiente &&
-                    reservation.ExpiresAt <= now)
-                .ToListAsync();
-
-            foreach (var reservation in expiredReservations)
+            try
             {
-                reservation.Status = ReservationStatus.Expirado;
+                var expiredReservations = await _context.Reservations
+                    .Where(reservation =>
+                        reservation.Status == ReservationStatus.Pendiente &&
+                        reservation.ExpiresAt <= now)
+                    .ToListAsync();
 
-                var seat = await _context.Seats
-                    .FirstOrDefaultAsync(seat => seat.Id == reservation.SeatId);
-
-                if (seat != null && seat.Status.ToUpper() == "RESERVADO")
+                foreach (var reservation in expiredReservations)
                 {
-                    seat.Status = "DISPONIBLE";
-                    seat.Version += 1;
+                    reservation.Status = ReservationStatus.Expirado;
+
+                    var seat = await _context.Seats
+                        .FirstOrDefaultAsync(seat => seat.Id == reservation.SeatId);
+
+                    if (seat != null && seat.Status.ToUpper() == "RESERVADO")
+                    {
+                        seat.Status = "DISPONIBLE";
+                        seat.Version += 1;
+                    }
                 }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return expiredReservations.Count;
             }
-
-            await _context.SaveChangesAsync();
-
-            return expiredReservations.Count;
+            catch (DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                throw new InvalidOperationException("Conflicto de concurrencia al procesar expiraciones.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "[CODE-ERROR] - Error al expirar reservaciones.");
+                throw;
+            }
         }
 
         private static void ValidateReservationStatus(string status)
