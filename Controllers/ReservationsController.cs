@@ -57,10 +57,10 @@ namespace ReservAr.Controllers
 
             if (result == null)
             {
-                _auditLogService.Log(0, "REQUEST_RESERVATION_GET_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
+                _auditLogService.Log(-1, "REQUEST_RESERVATION_GET_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
                 return NotFound(new { message = "Reserva no encontrada." });
             }
-            _auditLogService.Log(0, "REQUEST_RESERVATION_GET", "Reservation", "0", $"Reserva obtenida - ReservationId: {reservationId}");
+            _auditLogService.Log(-1, "REQUEST_RESERVATION_GET", "Reservation", "0", $"Reserva obtenida - ReservationId: {reservationId}");
             return Ok(result);
         }
 
@@ -73,15 +73,15 @@ namespace ReservAr.Controllers
 
                 if (result == null)
                 {
-                    _auditLogService.Log(0, "REQUEST_RESERVATION_UPDATE_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
+                    _auditLogService.Log(-1, "REQUEST_RESERVATION_UPDATE_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
                     return NotFound(new { message = "Reserva no encontrada." });
                 }
-                _auditLogService.Log(0, "REQUEST_RESERVATION_UPDATE", "Reservation", "0", $"Reserva actualizada - ReservationId: {reservationId}, NewStatus: {request.Status}");
+                _auditLogService.Log(-1, "REQUEST_RESERVATION_UPDATE", "Reservation", "0", $"Reserva actualizada - ReservationId: {reservationId}, NewStatus: {request.Status}");
                 return Ok(result);
             }
             catch (InvalidOperationException ex)
             {
-                _auditLogService.Log(0, "REQUEST_RESERVATION_UPDATE_FAILED", "Reservation", "0", $"Fallo al actualizar reserva: operación inválida - ReservationId: {reservationId} - {ex.Message}");
+                _auditLogService.Log(-1, "REQUEST_RESERVATION_UPDATE_FAILED", "Reservation", "0", $"Fallo al actualizar reserva: operación inválida - ReservationId: {reservationId} - {ex.Message}");
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -90,7 +90,7 @@ namespace ReservAr.Controllers
         public async Task<IActionResult> ExpirePending()
         {
             var expiredCount = await _reservationService.ExpirePendingReservationsAsync();
-            _auditLogService.Log(0, "REQUEST_RESERVATION_EXPIRE_PENDING", "Reservation", "0", $"Reservas expiradas - Count: {expiredCount}");
+            _auditLogService.Log(-1, "REQUEST_RESERVATION_EXPIRE_PENDING", "Reservation", "0", $"Reservas expiradas - Count: {expiredCount}");
             return Ok(new
             {
                 expiredCount = expiredCount
@@ -104,7 +104,7 @@ namespace ReservAr.Controllers
             [FromQuery] string? status)
         {
             var result = await _reservationService.SearchAsync(userId, seatId, status);
-            _auditLogService.Log(0, "REQUEST_RESERVATION_SEARCH", "Reservation", "0", $"Búsqueda de reservas - UserId: {userId}, SeatId: {seatId}, Status: {status}");
+            _auditLogService.Log(-1, "REQUEST_RESERVATION_SEARCH", "Reservation", "0", $"Búsqueda de reservas - UserId: {userId}, SeatId: {seatId}, Status: {status}");
             return Ok(result);
         }
     }

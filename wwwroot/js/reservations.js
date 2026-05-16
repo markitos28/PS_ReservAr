@@ -735,9 +735,9 @@ async function payReservation() {
         return;
     }
 
-    const user = getLoggedUser();
+    const user_email = getLoggedUser();
 
-    if (!user) {
+    if (!user_email) {
         showError("No se encontró el usuario logueado.");
         return;
     }
@@ -752,6 +752,24 @@ async function payReservation() {
     hideMessages();
 
     try {
+
+        const userRequest = await fetchWithAuth(`${API_BASE_URL}/users/by-email?email=${encodeURIComponent(user_email.email)}`, {
+            method: "GET"
+        });
+
+        if (!userRequest) {
+            return;
+        }
+
+        const userData = await parseJsonSafely(userRequest);
+
+        if (!userRequest.ok) {
+            throw new Error(userData?.message || userData?.detail || "No se pudo obtener la información del usuario.");
+        }
+
+        const user = userData || {};
+        console.log("Usuario obtenido para pago:", user);
+
         const paymentRequest = {
             eventId: parseInt(eventId),
             sectorId: selectedSector.id,
