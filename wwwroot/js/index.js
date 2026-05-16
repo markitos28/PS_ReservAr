@@ -1,5 +1,28 @@
+var path = window.location.pathname;
+const PATH_PROJECT= path.substring(0, path.lastIndexOf('/'));
 const EVENT_API_BASE_URL = "http://localhost:5183/api/v1";
-const RESERVATIONS_PAGE_URL = "/reservations.html";
+const RESERVATIONS_PAGE_URL = `${PATH_PROJECT}/reservations.html`;
+const LOGIN_PAGE_URL = `${PATH_PROJECT}/login.html`;
+const HOME_PAGE_URL = `${PATH_PROJECT}/index.html`;
+const SIGNUP_PAGE_URL = `${PATH_PROJECT}/signup.html`;
+
+const searchNameInput = document.getElementById("searchName");
+const searchDateInput = document.getElementById("searchDate");
+const searchTimeInput = document.getElementById("searchTime");
+const searchVenueInput = document.getElementById("searchVenue");
+
+const searchButton = document.getElementById("searchButton");
+const clearButton = document.getElementById("clearButton");
+
+const eventsContainer = document.getElementById("eventsContainer");
+const loadingMessage = document.getElementById("loadingMessage");
+const errorMessage = document.getElementById("errorMessage");
+const eventsCount = document.getElementById("eventsCount");
+const paginationControls = document.getElementById("paginationControls");
+const prevPageButton = document.getElementById("prevPageButton");
+const nextPageButton = document.getElementById("nextPageButton");
+const currentPageSpan = document.getElementById("currentPage");
+const totalPagesSpan = document.getElementById("totalPages");
 
 function renderWelcomeUser() {
     const welcome = document.getElementById("welcomeUser");
@@ -28,27 +51,37 @@ function renderWelcomeUser() {
     }
 }
 
-const searchNameInput = document.getElementById("searchName");
-const searchDateInput = document.getElementById("searchDate");
-const searchTimeInput = document.getElementById("searchTime");
-const searchVenueInput = document.getElementById("searchVenue");
 
-const searchButton = document.getElementById("searchButton");
-const clearButton = document.getElementById("clearButton");
 
-const eventsContainer = document.getElementById("eventsContainer");
-const loadingMessage = document.getElementById("loadingMessage");
-const errorMessage = document.getElementById("errorMessage");
-const eventsCount = document.getElementById("eventsCount");
+// Pagination state
+let currentPage = 1;
+const pageSize = 10;
+let totalPages = 1;
+let totalRecords = 0;
 
 document.addEventListener("DOMContentLoaded", async () => {
     renderNavbar();
     renderWelcomeUser();
     setLoggedUserLabel();
     await loadEvents();
+
+    prevPageButton.addEventListener("click", async () => {
+        if (currentPage > 1) {
+            currentPage--;
+            await loadEvents();
+        }
+    });
+
+    nextPageButton.addEventListener("click", async () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            await loadEvents();
+        }
+    });
 });
 
 searchButton.addEventListener("click", async () => {
+    currentPage = 1;
     await loadEvents();
 });
 
@@ -57,6 +90,7 @@ clearButton.addEventListener("click", async () => {
     searchDateInput.value = "";
     searchTimeInput.value = "";
     searchVenueInput.value = "";
+    currentPage = 1;
     await loadEvents();
 });
 
@@ -76,12 +110,12 @@ async function loadEvents() {
             headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const response = await fetch(`${EVENT_API_BASE_URL}/events${queryString}`, {
+        const URI = `${EVENT_API_BASE_URL}/events${queryString}${queryString ? "&" : "?"}pageNumber=${currentPage}&pageSize=${pageSize}`;
+        
+        const response = await fetch(URI, {
             method: "GET",
             headers: headers
         });
-
-        const data = await parseJsonSafely(response);
 
         if (response.status === 401) {
             throw new Error("Necesitás iniciar sesión para ver los eventos.");
@@ -91,8 +125,32 @@ async function loadEvents() {
             throw new Error(data?.message || data?.detail || "No se pudieron obtener los eventos.");
         }
 
-        const filteredEvents = applyClientSideFilters(data || []);
-        renderEvents(filteredEvents);
+        const data = await parseJsonSafely(response);
+
+        // Handle paginated response from backend
+        if (data && typeof data === 'object') {
+            // If response has Items property (PagedResponse<T>)
+            if (data.items && Array.isArray(data.items)) {
+                totalRecords = data.totalRecords || 0;
+                totalPages = data.totalPages || 1;
+                currentPageSpan.textContent = data.pageNumber || currentPage;
+                totalPagesSpan.textContent = totalPages;
+                const filteredEvents = applyClientSideFilters(data.items);
+                renderEvents(filteredEvents);
+            } else if (Array.isArray(data)) {
+                // If response is an array, treat it as non-paginated
+                totalRecords = data.length;
+                totalPages = 1;
+                currentPageSpan.textContent = "1";
+                totalPagesSpan.textContent = "1";
+                const filteredEvents = applyClientSideFilters(data.items);
+                renderEvents(filteredEvents);
+            } else {
+                throw new Error("Formato de respuesta inválido. Se esperaba un PagedResponse o un array.");
+            }
+        } else {
+            throw new Error("Formato de respuesta inválido. La respuesta debe ser un objeto.");
+        }
     } catch (error) {
         console.error("[CODE-ERROR] - Error al cargar eventos:", error);
         showError(error.message || "No se pudieron cargar los eventos.");
@@ -141,7 +199,7 @@ function applyClientSideFilters(events) {
 
 function renderEvents(events) {
     eventsContainer.innerHTML = "";
-    eventsCount.textContent = `${events.length} evento(s)`;
+    eventsCount.textContent = `${totalRecords} evento(s)`;
 
     if (!events.length) {
         eventsContainer.innerHTML = `
@@ -149,6 +207,7 @@ function renderEvents(events) {
                 No se encontraron eventos con los filtros seleccionados.
             </div>
         `;
+        paginationControls.classList.add("hidden");
         return;
     }
 
@@ -178,7 +237,7 @@ function renderEvents(events) {
             const token = localStorage.getItem("jwtToken");
 
             if (!token) {
-                window.location.href = "/login.html";
+                window.location.href = `${LOGIN_PAGE_URL}`;
                 return;
             }
 
@@ -186,6 +245,15 @@ function renderEvents(events) {
         });
 
         eventsContainer.appendChild(card);
+    }
+
+    // Show pagination controls if there's more than one page
+    if (totalPages > 1) {
+        paginationControls.classList.remove("hidden");
+        prevPageButton.disabled = currentPage === 1;
+        nextPageButton.disabled = currentPage === totalPages;
+    } else {
+        paginationControls.classList.add("hidden");
     }
 }
 
@@ -199,23 +267,23 @@ function renderNavbar() {
 
     if (token) {
         navActions.innerHTML = `
-            <a href="/index.html" class="btn btn-outline">Inicio</a>
+            <a href="${HOME_PAGE_URL}" class="btn btn-outline">Inicio</a>
             <button id="logoutButton" class="btn btn-logout">Cerrar Sesíon</button>
         `;
 
         document.getElementById("logoutButton").addEventListener("click", () => {
             localStorage.removeItem("jwtToken");
             localStorage.removeItem("loggedUser");
-            window.location.href = "/index.html";
+            window.location.href = `${HOME_PAGE_URL}`;
         });
 
         return;
     }
 
     navActions.innerHTML = `
-        <a href="/index.html" class="btn btn-outline">Inicio</a>
-        <a href="/login.html" class="btn btn-outline">Iniciar Sesíon</a>
-        <a href="/signup.html" class="btn btn-primary">Registrarse</a>
+        <a href="${HOME_PAGE_URL}" class="btn btn-outline">Inicio</a>
+        <a href="${LOGIN_PAGE_URL}" class="btn btn-outline">Iniciar Sesíon</a>
+        <a href="${SIGNUP_PAGE_URL}" class="btn btn-primary">Registrarse</a>
     `;
 }
 

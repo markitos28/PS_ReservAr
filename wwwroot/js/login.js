@@ -1,6 +1,8 @@
+const path = window.location.pathname;
+const PATH_PROJECT= path.substring(0, path.lastIndexOf('/'));
 const AUTH_API_BASE_URL = "http://localhost:5183/api/v1";
 const USER_API_BASE_URL = "http://localhost:5183/api/v1";
-const HOME_PAGE_URL = "/index.html";
+const HOME_PAGE_URL = `${PATH_PROJECT}/index.html`;
 
 const loginForm = document.getElementById("loginForm");
 const emailInput = document.getElementById("email");

@@ -1149,6 +1149,15 @@ namespace ReservAr.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            Email = "system_application@reservar.com",
+                            Name = "System Application",
+                            PasswordHash = ""
+                        });
                 });
 
             modelBuilder.Entity("ReservAr.Models.Audit_Log", b =>

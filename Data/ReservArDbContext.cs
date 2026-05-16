@@ -24,7 +24,7 @@ namespace ReservAr.Data
             {
                 entity.HasKey(e => e.Id);
 
-                entity.Property(e => e.Id)
+                  entity.Property(e => e.Id)
                     .ValueGeneratedOnAdd();
 
                 entity.Property(e => e.Name)
@@ -207,7 +207,7 @@ namespace ReservAr.Data
             });
 
             // Data seeding: Users
-            //modelBuilder.Entity<User>().HasData(new User { Id = 1, Name = "Admin User", Email = "RA_adminuser@gmail.com", PasswordHash = "" });
+            modelBuilder.Entity<User>().HasData(new User { Id = -1, Name = "System Application", Email = "system_application@reservar.com", PasswordHash = "" });
 
             // Data seeding: Events
             modelBuilder.Entity<Event>().HasData(

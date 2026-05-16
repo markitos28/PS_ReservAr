@@ -5,7 +5,7 @@
 namespace ReservAr.Migrations
 {
     /// <inheritdoc />
-    public partial class generacion_de_users : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

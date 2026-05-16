@@ -15,7 +15,7 @@
             </div>
 
             <nav class="nav-actions">
-                <a href="/index.html" class="btn btn-outline-inicio">Inicio</a>
+                <a href="index.html" class="btn btn-outline-inicio">Inicio</a>
                 <button id="logoutButton" class="btn btn-logout">Cerrar Sesíon</button>
             </nav>
         </header>
@@ -29,13 +29,31 @@
             <section class="panel">
                 <div class="section-header">
                     <div>
-                        <h2>Seleccionar asiento</h2>
+                        <h2>Seleccionar asientos</h2>
                         <p id="selectedSectorLabel">Elegí un sector para ver sus butacas.</p>
                     </div>
 
                     <div id="timerBox" class="timer-box hidden">
                         Tiempo restante: <strong id="timerValue">05:00</strong>
                     </div>
+                </div>
+
+                <div class="quantity-selector-container">
+                    <label for="seatQuantityInput">Cantidad de asientos a reservar:</label>
+                    <div class="quantity-input-wrapper">
+                        <button id="decreaseQuantityBtn" class="quantity-btn" type="button">−</button>
+                        <input 
+                            id="seatQuantityInput" 
+                            type="number" 
+                            min="1" 
+                            max="20" 
+                            value="1" 
+                            class="quantity-input"
+                            placeholder="Ingresá cantidad"
+                        />
+                        <button id="increaseQuantityBtn" class="quantity-btn" type="button">+</button>
+                    </div>
+                    <p id="quantityHelperText" class="quantity-helper-text">Seleccioná la cantidad de asientos antes de hacer clic en el mapa</p>
                 </div>
 
                 <div class="legend">
@@ -52,7 +70,6 @@
                 <div id="seatsContainer" class="seats-matrix-container"></div>
 
                 <div class="actions">
-                    <button id="reserveButton" class="btn btn-primary" disabled>Reservar asiento</button>
                     <button id="payButton" class="btn btn-primary" disabled>Pagar</button>
                     <button id="cancelButton" class="btn btn-outline" disabled>Cancelar selección</button>
                 </div>
