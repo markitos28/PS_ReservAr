@@ -13,23 +13,29 @@ namespace ReservAr.Services
             _dbContext = dbContext;
         }
 
-        public void Log(int userId, string action, string entityType,  string entityId,  string details)
+        public async Task Log(int userId, string action, string entityType,  string entityId,  string details)
         {   
-            var auditLog = new Audit_Log
+            try
             {
-                Id= Guid.NewGuid(),
-                UserId = userId,
-                Action = action,
-                EntityType = entityType,
-                EntityId = entityId,
-                Details = details,
-                CreatedAt = DateTime.UtcNow
-            };
+                var auditLog = new Audit_Log
+                {
+                    Id= Guid.NewGuid(),
+                    UserId = userId,
+                    Action = action,
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    Details = details,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            _dbContext.AuditLogs.Add(auditLog);
-            _dbContext.SaveChanges();
+                _dbContext.AuditLogs.Add(auditLog);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Aquí podrías loguear el error a un sistema de logging o simplemente ignorarlo.
+                Console.WriteLine($"Error al guardar el log de auditoría: {ex.Message}");
+            }
         }
-        
-        
     }
 }

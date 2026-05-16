@@ -28,7 +28,7 @@ namespace ReservAr.Controllers
             {
                 // No usamos UserId = 0 porque rompe la FK Audit_Log -> User.
                 // Usamos el Id del usuario existente.
-                _auditLogService.Log(
+                await _auditLogService.Log(
                     existingUser.Id,
                     "REQUEST_USER_REGISTER_ERROR",
                     "User",
@@ -36,12 +36,12 @@ namespace ReservAr.Controllers
                     "Fallo en el registro: email ya en uso - " + request.Email
                 );
 
-                return BadRequest("Email already in use.");
+                return BadRequest(new { message = "El correo electrónico ya está en uso." });
             }
 
             var user = await _userService.CreateUserAsync(request.Name, request.Email, request.Password);
 
-            _auditLogService.Log(
+            await _auditLogService.Log(
                 user.Id,
                 "REQUEST_USER_REGISTER_SUCCESS",
                 "User",

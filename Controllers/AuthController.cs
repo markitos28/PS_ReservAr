@@ -34,19 +34,19 @@ namespace ReservAr.Controllers
             var user = await _userService.GetUserByEmailAsync(request.Email);
             if (user == null)
             {
-                _auditLogService.Log(-1, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
+                await _auditLogService.Log(-1, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
                 return Unauthorized("Invalid email or password.");
             }
 
             var isValid = await _userService.ValidateUserCredentialsAsync(request.Email, request.Password);
             if (!isValid)
             {
-                _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_FAILED", "User", user.Id.ToString(), "Fallo de login: credenciales inválidas - " + request.Email);
+                await _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_FAILED", "User", user.Id.ToString(), "Fallo de login: credenciales inválidas - " + request.Email);
                 return Unauthorized("Invalid email or password.");
             }
 
             var token = _authenticationServices.GenerateJwtToken(user);
-            _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_SUCCESS", "User", user.Id.ToString(), "Login exitoso - " + request.Email);
+            await _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_SUCCESS", "User", user.Id.ToString(), "Login exitoso - " + request.Email);
             return Ok(new
             {
                 access_token = token,

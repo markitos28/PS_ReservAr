@@ -11,15 +11,19 @@ namespace ReservAr.Services
     {
         private readonly ReservArDbContext _context;
         private readonly ILogger<ReservationService> _logger;
+        private readonly IAuditLogServices _auditLogService;
 
-        public ReservationService(ReservArDbContext context, ILogger<ReservationService> logger)
+        public ReservationService(ReservArDbContext context, ILogger<ReservationService> logger, IAuditLogServices auditLogService)
         {
             _context = context;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         public async Task<ReservationResponse> CreateAsync(CreateReservationRequest request)
         {
+            await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_ATTEMPT", "Seat", request.SeatId.ToString(), $"Intento de reserva para asiento {request.SeatId}");
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -71,17 +75,52 @@ namespace ReservAr.Services
 
                 await transaction.CommitAsync();
 
+                await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_SUCCESS", "Reservation", reservation.Id.ToString(), $"Reserva {reservation.Id} creada con éxito");
+
                 return MapToResponse(reservation);
             }
             catch (DbUpdateConcurrencyException)
             {
                 await transaction.RollbackAsync();
-                throw new InvalidOperationException("El asiento fue modificado por otro proceso. Por favor, intente nuevamente.");
+                await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_CONFLICT", "Seat", request.SeatId.ToString(), "Conflicto de concurrencia: el asiento ya fue tomado por otro usuario.");
+                throw new InvalidOperationException("CONFLICT_409: El asiento ya no está disponible.");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "[CODE-ERROR] - Error al crear la reserva.");
+                throw;
+            }
+        }
+
+        public async Task ProcessPaymentAsync(int userId, Guid reservationId)
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var reservation = await _context.Reservations
+                    .FirstOrDefaultAsync(r => r.Id == reservationId && r.UserId == userId);
+
+                if (reservation == null) throw new KeyNotFoundException("Reserva no encontrada.");
+                if (reservation.Status != ReservationStatus.Pendiente) throw new InvalidOperationException("Reserva no válida para pago.");
+
+                var seat = await _context.Seats.FirstOrDefaultAsync(s => s.Id == reservation.SeatId);
+                if (seat == null) throw new KeyNotFoundException("Asiento no encontrado.");
+
+                // Transacción estricta: Actualizar reserva y asiento
+                reservation.Status = "PAGADO";
+                seat.Status = "VENDIDO";
+                seat.Version += 1;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                await _auditLogService.Log(userId, "PAYMENT_SUCCESS", "Reservation", reservationId.ToString(), "Pago procesado y asiento vendido.");
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                await _auditLogService.Log(userId, "PAYMENT_FAILED", "Reservation", reservationId.ToString(), $"Error en pago: {ex.Message}");
                 throw;
             }
         }
@@ -185,6 +224,7 @@ namespace ReservAr.Services
                         seat.Status = "DISPONIBLE";
                         seat.Version += 1;
                     }
+                    await _auditLogService.Log(-1, "RESERVATION_AUTO_EXPIRE", "Reservation", reservation.Id.ToString(), "Liberación automática por tiempo agotado.");
                 }
 
                 await _context.SaveChangesAsync();

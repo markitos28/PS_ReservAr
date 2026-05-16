@@ -5,6 +5,6 @@ namespace ReservAr.Services.Interfaces
     /// </summary>
     public interface IAuditLogServices
     {
-        void Log(int userId, string action, string entityType, string entityId, string details);
+        Task Log(int userId, string action, string entityType, string entityId, string details);
     }
 }
