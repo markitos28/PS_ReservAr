@@ -12,8 +12,8 @@ using ReservAr.Data;
 namespace ReservAr.Migrations
 {
     [DbContext(typeof(ReservArDbContext))]
-    [Migration("20260429213417_AddReservationModule")]
-    partial class AddReservationModule
+    [Migration("20260516010401_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1152,6 +1152,15 @@ namespace ReservAr.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            Email = "system_application@reservar.com",
+                            Name = "System Application",
+                            PasswordHash = ""
+                        });
                 });
 
             modelBuilder.Entity("ReservAr.Models.Audit_Log", b =>

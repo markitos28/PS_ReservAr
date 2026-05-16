@@ -360,6 +360,103 @@ body {
     display: none;
 }
 
+/* Quantity Selector Styles */
+.quantity-selector-container {
+    background: rgba(30, 41, 59, 0.58);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 22px;
+}
+
+.quantity-selector-container label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.quantity-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.quantity-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.12);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.quantity-btn:hover {
+    transform: scale(1.05);
+    background: rgba(99, 102, 241, 0.24);
+    border-color: rgba(99, 102, 241, 0.7);
+}
+
+.quantity-btn:active {
+    transform: scale(0.95);
+}
+
+.quantity-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quantity-input {
+    flex: 1;
+    max-width: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    background: rgba(15, 23, 42, 0.7);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quantity-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.quantity-input::placeholder {
+    color: rgba(248, 250, 252, 0.4);
+}
+
+/* Remove spinner for number input */
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.quantity-helper-text {
+    font-size: 13px;
+    color: #cbd5e1;
+    margin: 0;
+}
+
 @media (max-width: 900px) {
     .reservation-layout {
         grid-template-columns: 1fr;
