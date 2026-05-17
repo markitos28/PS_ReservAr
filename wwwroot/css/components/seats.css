@@ -1,0 +1,42 @@
+.seats-matrix-container {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin: 18px 0 22px 0;
+}
+
+.sector-matrix {
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.94));
+    overflow-x: auto;
+}
+
+.seat {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seat.available { background: #22c55e; }
+.seat.occupied { background: #ef4444; cursor: not-allowed; }
+.seat.selected { background: #facc15; color: #111827; }
+
+.stage {
+    width: 100%;
+    text-align: center;
+    padding: 13px;
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 10px 10px 30px 30px;
+    letter-spacing: 3px;
+    font-weight: bold;
+}

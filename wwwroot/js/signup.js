@@ -1,189 +1,44 @@
-const path = window.location.pathname;
-const PATH_PROJECT= path.substring(0, path.lastIndexOf('/'));
-const AUTH_API_BASE_URL = "http://localhost:5183/api/v1";
-const USER_API_BASE_URL = "http://localhost:5183/api/v1";
-const HOME_PAGE_URL = `${PATH_PROJECT}/index.html`;
+import { AuthService } from './services/auth_services.js';
+import { SignupUI } from './ui/signup_ui.js';
+import { PAGES } from './config.js';
 
-const signupForm = document.getElementById("signupForm");
-const fullNameInput = document.getElementById("fullName");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const confirmPasswordInput = document.getElementById("confirmPassword");
-const signupButton = document.getElementById("signupButton");
+document.addEventListener("DOMContentLoaded", () => {
+    const { signupForm, toggles, password, confirmPassword } = SignupUI.elements;
 
-const togglePasswordButton = document.getElementById("togglePassword");
-const toggleConfirmPasswordButton = document.getElementById("toggleConfirmPassword");
+    toggles.password.onclick = () => SignupUI.toggleVisibility(password, toggles.password);
+    toggles.confirm.onclick = () => SignupUI.toggleVisibility(confirmPassword, toggles.confirm);
 
-const loadingMessage = document.getElementById("loadingMessage");
-const errorMessage = document.getElementById("errorMessage");
-const successMessage = document.getElementById("successMessage");
+    signupForm.onsubmit = async (e) => {
+        e.preventDefault();
+        
+        const data = {
+            fullName: SignupUI.elements.fullName.value.trim(),
+            email: SignupUI.elements.email.value.trim(),
+            password: password.value,
+            confirmPassword: confirmPassword.value
+        };
 
-togglePasswordButton.addEventListener("click", () => {
-  togglePasswordVisibility(passwordInput, togglePasswordButton);
+        if (data.password !== data.confirmPassword) {
+            SignupUI.showFeedback("Las contraseñas no coinciden.");
+            return;
+        }
+
+        SignupUI.setLoading(true);
+
+        try {
+            await AuthService.register({
+                name: data.fullName,
+                email: data.email,
+                password: data.password
+            });
+
+            SignupUI.showFeedback("¡Cuenta creada! Redirigiendo al login...", false);
+            setTimeout(() => window.location.href = PAGES.LOGIN, 2000);
+            
+        } catch (err) {
+            SignupUI.showFeedback(err.message);
+        } finally {
+            SignupUI.setLoading(false);
+        }
+    };
 });
-
-toggleConfirmPasswordButton.addEventListener("click", () => {
-  togglePasswordVisibility(confirmPasswordInput, toggleConfirmPasswordButton);
-});
-
-signupForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  hideMessages();
-
-  const fullName = fullNameInput.value.trim();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-  const confirmPassword = confirmPasswordInput.value.trim();
-
-  if (!fullName || !email || !password || !confirmPassword) {
-    showError("Completá todos los campos.");
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    showError("Las contraseñas no coinciden.");
-    return;
-  }
-
-  if (password.length < 6) {
-    showError("La contraseña debe tener al menos 6 caracteres.");
-    return;
-  }
-
-  setLoadingState(true);
-
-  try {
-    const createdUser = await createUserInMsUser({
-      name: fullName,
-      email: email,
-      password: password
-    });
-
-    const authResponse = await authenticateAgainstMsAuth(email, password);
-    const token = authResponse.access_token || authResponse.token || authResponse.jwt || authResponse.accessToken;
-
-    if (!token) {
-      throw new Error("El login se realizó pero Authentication no devolvió un token.");
-    }
-
-    localStorage.setItem("jwtToken", token);
-    localStorage.setItem("loggedUser", JSON.stringify(createdUser));
-
-    showSuccess("Usuario registrado correctamente. Redirigiendo...");
-
-    setTimeout(() => {
-      window.location.href = HOME_PAGE_URL;
-    }, 900);
-  } catch (error) {
-    console.error("[CODE-ERROR] - Error durante el registro:", error);
-    showError(error.message || "No se pudo registrar el usuario.");
-  } finally {
-    setLoadingState(false);
-  }
-});
-
-async function createUserInMsUser(userPayload) {
-  const response = await fetch(`${USER_API_BASE_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(userPayload)
-  });
-
-  const data = await parseResponseSafely(response);
-
-  if (!response.ok) {
-    const message = getErrorMessage(data, response.status);
-
-    if (message.toLowerCase().includes("email already in use")) {
-      throw new Error("El email ya está registrado.");
-    }
-
-    throw new Error(message || "No se pudo dar de alta el usuario.");
-  }
-
-  return data;
-}
-
-async function authenticateAgainstMsAuth(email, password) {
-  const response = await fetch(`${AUTH_API_BASE_URL}/auth`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      email: email,
-      password: password
-    })
-  });
-
-  const data = await parseResponseSafely(response);
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data, response.status) || "No se pudo iniciar sesión luego del registro.");
-  }
-
-  return data;
-}
-
-async function parseResponseSafely(response) {
-  const contentType = response.headers.get("content-type");
-
-  if (contentType && contentType.includes("application/json")) {
-    return await response.json();
-  }
-
-  const text = await response.text();
-
-  if (text) {
-    return { message: text };
-  }
-
-  return null;
-}
-
-function getErrorMessage(data, status) {
-  if (!data) {
-    return `Error HTTP ${status}`;
-  }
-
-  if (typeof data === "string") {
-    return data;
-  }
-
-  return data.message || data.detail || data.title || `Error HTTP ${status}`;
-}
-
-function togglePasswordVisibility(input, button) {
-  if (input.type === "password") {
-    input.type = "text";
-    button.textContent = "Ocultar";
-    return;
-  }
-
-  input.type = "password";
-  button.textContent = "Ver";
-}
-
-function setLoadingState(isLoading) {
-  signupButton.disabled = isLoading;
-  loadingMessage.classList.toggle("hidden", !isLoading);
-}
-
-function hideMessages() {
-  errorMessage.classList.add("hidden");
-  successMessage.classList.add("hidden");
-  errorMessage.textContent = "";
-  successMessage.textContent = "";
-}
-
-function showError(message) {
-  errorMessage.textContent = message;
-  errorMessage.classList.remove("hidden");
-}
-
-function showSuccess(message) {
-  successMessage.textContent = message;
-  successMessage.classList.remove("hidden");
-}

@@ -1,0 +1,22 @@
+.signup-page {
+    width: 100%;
+    max-width: 460px;
+    padding: 20px;
+}
+
+.signup-card {
+    background: var(--bg-card);
+    border-radius: 22px;
+    padding: 36px 26px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+}
+
+.signup-header h1 {
+    font-size: 32px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+}
