@@ -30,6 +30,9 @@ namespace ReservAr.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Create([FromBody] CreateSectorRequest request)
         {
             try
@@ -57,6 +60,8 @@ namespace ReservAr.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPut("{sectorId:int}/price")]
+        [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdatePrice(int sectorId, [FromBody] UpdateSectorRequest request)
         {
             var result = await _sectorService.UpdatePriceAsync(sectorId, request);
@@ -77,6 +82,8 @@ namespace ReservAr.Controllers
         /// <param name="sectorId"></param>
         /// <returns></returns>
         [HttpGet("{sectorId:int}")]
+        [ProducesResponseType(typeof(SectorResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int sectorId)
         {
             var result = await _sectorService.GetByIdAsync(sectorId);
@@ -97,6 +104,7 @@ namespace ReservAr.Controllers
         /// <param name="name"></param>
         /// <returns></returns>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<SectorResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Search([FromQuery] int? eventId, [FromQuery] string? name)
         {
             var result = await _sectorService.SearchAsync(eventId, name);

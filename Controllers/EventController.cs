@@ -8,6 +8,9 @@ namespace ReservAr.Controllers
     [ApiController]
     [AllowAnonymous]
     [Route("api/v1/events")]
+    /// <summary>
+    /// Controlador para la gestión de eventos (conciertos, partidos, etc.).
+    /// </summary>
     public class EventsController : ControllerBase
     {
         private readonly IEventService _eventService;
@@ -21,7 +24,15 @@ namespace ReservAr.Controllers
             _auditLogService = auditLogService;
         }
 
+        /// <summary>
+        /// Crea un nuevo evento en el sistema.
+        /// </summary>
+        /// <param name="request">Datos de creación del evento.</param>
+        /// <returns>El evento creado.</returns>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Create([FromBody] CreateEventRequest request)
         {
             try
@@ -43,7 +54,17 @@ namespace ReservAr.Controllers
             }
         }
 
+        /// <summary>
+        /// Actualiza los detalles de un evento existente.
+        /// </summary>
+        /// <param name="eventId">ID del evento a actualizar.</param>
+        /// <param name="request">Nuevos datos del evento.</param>
+        /// <returns>El evento actualizado.</returns>
         [HttpPut("{eventId:int}")]
+        [ProducesResponseType(typeof(EventResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Update(int eventId, [FromBody] UpdateEventRequest request)
         {
             try
@@ -71,7 +92,15 @@ namespace ReservAr.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene un evento por su identificador único.
+        /// </summary>
+        /// <param name="eventId">ID del evento.</param>
+        /// <returns>Detalles del evento.</returns>
         [HttpGet("{eventId:int}")]
+        [ProducesResponseType(typeof(EventResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetById(int eventId)
         {
             try
@@ -107,6 +136,7 @@ namespace ReservAr.Controllers
         /// <param name="pageSize"></param>
         /// <returns></returns>
         [HttpGet]
+        [ProducesResponseType(typeof(PagedResponse<EventResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Search(
             [FromQuery] int? eventId,
             [FromQuery] string? name,

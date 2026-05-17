@@ -8,6 +8,9 @@ namespace ReservAr.Controllers
     [ApiController]
     [Authorize]
     [Route("api/v1/reservations")]
+    /// <summary>
+    /// Controlador para gestionar el ciclo de vida de las reservaciones de asientos.
+    /// </summary>
     public class ReservationsController : ControllerBase
     {
         private readonly IReservationService _reservationService;
@@ -21,7 +24,16 @@ namespace ReservAr.Controllers
             _auditLogService = auditLogService;
         }
 
+        /// <summary>
+        /// Crea una nueva reservación para un asiento específico.
+        /// </summary>
+        /// <param name="request">Datos de la reserva (UserId y SeatId).</param>
+        /// <returns>La reserva creada con su estado inicial (PENDIENTE).</returns>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Create([FromBody] CreateReservationRequest request)
         {
             try
@@ -50,7 +62,14 @@ namespace ReservAr.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene los detalles de una reserva por su identificador único (GUID).
+        /// </summary>
+        /// <param name="reservationId">ID único de la reserva.</param>
+        /// <returns>Detalles de la reserva.</returns>
         [HttpGet("{reservationId:guid}")]
+        [ProducesResponseType(typeof(ReservationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(Guid reservationId)
         {
             var result = await _reservationService.GetByIdAsync(reservationId);
@@ -64,7 +83,16 @@ namespace ReservAr.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Actualiza el estado de una reserva.
+        /// </summary>
+        /// <param name="reservationId">ID de la reserva.</param>
+        /// <param name="request">Nuevo estado para la reserva.</param>
+        /// <returns>La reserva actualizada.</returns>
         [HttpPatch("{reservationId:guid}")]
+        [ProducesResponseType(typeof(ReservationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(Guid reservationId, [FromBody] UpdateReservationRequest request)
         {
             try
@@ -86,7 +114,12 @@ namespace ReservAr.Controllers
             }
         }
 
+        /// <summary>
+        /// Ejecuta el proceso de expiración para todas las reservas PENDIENTES que hayan superado el tiempo límite.
+        /// </summary>
+        /// <returns>Cantidad de reservas expiradas durante el proceso.</returns>
         [HttpPatch("expire-pending")]
+        [ProducesResponseType( StatusCodes.Status200OK)]
         public async Task<IActionResult> ExpirePending()
         {
             var expiredCount = await _reservationService.ExpirePendingReservationsAsync();
@@ -97,7 +130,15 @@ namespace ReservAr.Controllers
             });
         }
 
+        /// <summary>
+        /// Busca reservas basadas en filtros opcionales como usuario, asiento o estado.
+        /// </summary>
+        /// <param name="userId">Filtrar por ID de usuario.</param>
+        /// <param name="seatId">Filtrar por ID de asiento.</param>
+        /// <param name="status">Filtrar por estado (PENDIENTE, PAGADO, etc.).</param>
+        /// <returns>Lista de reservas que coinciden con los criterios.</returns>
         [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<ReservationResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> Search(
             [FromQuery] int? userId,
             [FromQuery] Guid? seatId,
