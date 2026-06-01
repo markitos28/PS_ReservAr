@@ -42,16 +42,28 @@ namespace ReservAr.Controllers
             }
             catch (KeyNotFoundException ex)
             {
+<<<<<<< HEAD
+=======
+                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
+>>>>>>> master
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: recurso no encontrado - SeatId: {request.SeatId} - {ex.Message}");
                 return NotFound(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
+<<<<<<< HEAD
+=======
+                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
+>>>>>>> master
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: operación inválida - SeatId: {request.SeatId} - {ex.Message}");
                 return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
+=======
+                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al crear reserva.");
+>>>>>>> master
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: error inesperado - SeatId: {request.SeatId} - {ex.Message}");
                 return StatusCode(500, new { message = "Error interno al crear reserva.", detail = ex.InnerException?.Message ?? ex.Message });
             }

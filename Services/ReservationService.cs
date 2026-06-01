@@ -10,18 +10,17 @@ namespace ReservAr.Services
     public class ReservationService : IReservationService
     {
         private readonly ReservArDbContext _context;
-        private readonly ILogger<ReservationService> _logger;
         private readonly IAuditLogServices _auditLogService;
-
-        public ReservationService(ReservArDbContext context, ILogger<ReservationService> logger, IAuditLogServices auditLogService)
+        public ReservationService(ReservArDbContext context, IAuditLogServices auditLogService)
         {
             _context = context;
-            _logger = logger;
             _auditLogService = auditLogService;
         }
 
         public async Task<ReservationResponse> CreateAsync(CreateReservationRequest request)
         {
+            await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_ATTEMPT", "Seat", request.SeatId.ToString(), $"Intento de reserva para asiento {request.SeatId}");
+
             await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_ATTEMPT", "Seat", request.SeatId.ToString(), $"Intento de reserva para asiento {request.SeatId}");
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -77,6 +76,8 @@ namespace ReservAr.Services
 
                 await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_SUCCESS", "Reservation", reservation.Id.ToString(), $"Reserva {reservation.Id} creada con éxito");
 
+                await _auditLogService.Log(request.UserId, "RESERVATION_CREATE_SUCCESS", "Reservation", reservation.Id.ToString(), $"Reserva {reservation.Id} creada con éxito");
+
                 return MapToResponse(reservation);
             }
             catch (DbUpdateConcurrencyException)
@@ -88,7 +89,6 @@ namespace ReservAr.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "[CODE-ERROR] - Error al crear la reserva.");
                 throw;
             }
         }
@@ -225,6 +225,7 @@ namespace ReservAr.Services
                         seat.Version += 1;
                     }
                     await _auditLogService.Log(-1, "RESERVATION_AUTO_EXPIRE", "Reservation", reservation.Id.ToString(), "Liberación automática por tiempo agotado.");
+                    await _auditLogService.Log(-1, "RESERVATION_AUTO_EXPIRE", "Reservation", reservation.Id.ToString(), "Liberación automática por tiempo agotado.");
                 }
 
                 await _context.SaveChangesAsync();
@@ -240,7 +241,6 @@ namespace ReservAr.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "[CODE-ERROR] - Error al expirar reservaciones.");
                 throw;
             }
         }

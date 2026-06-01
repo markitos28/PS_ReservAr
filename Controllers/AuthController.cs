@@ -50,7 +50,11 @@ namespace ReservAr.Controllers
 
             var token = _authenticationServices.GenerateJwtToken(user);
             await _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_SUCCESS", "User", user.Id.ToString(), "Login exitoso - " + request.Email);
+<<<<<<< HEAD
             return Ok(new AuthenticationResponse
+=======
+            return Ok(new
+>>>>>>> master
             {
                 Access_token = token,
                 Token_type = "Bearer",

@@ -47,6 +47,10 @@ namespace ReservAr.Controllers
             catch (Exception ex)
             {
                 await _auditLogService.Log(-1, "REQUEST_EVENT_CREATE_FAILED", "Event", "0", "Fallo al crear evento: " + request.Name + " - " + ex.Message);
+<<<<<<< HEAD
+=======
+                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al crear evento.");
+>>>>>>> master
                 return StatusCode(500, new { message = "Error interno al crear evento.", detail = ex.InnerException?.Message ?? ex.Message });
             }
         }
@@ -84,6 +88,10 @@ namespace ReservAr.Controllers
             catch (Exception ex)
             {
                 await _auditLogService.Log(-1, "REQUEST_EVENT_UPDATE_FAILED", "Event", eventId.ToString(), "Fallo al actualizar evento: " + ex.Message);
+<<<<<<< HEAD
+=======
+                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al actualizar evento.");
+>>>>>>> master
                 return StatusCode(500, new { message = "Error interno al actualizar evento.", detail = ex.InnerException?.Message ?? ex.Message });
             }
         }
@@ -114,6 +122,10 @@ namespace ReservAr.Controllers
             catch (Exception ex)
             {
                 await _auditLogService.Log(-1, "REQUEST_EVENT_GET_ERROR", "Event", eventId.ToString(), "Error inesperado al obtener evento: " + ex.Message);
+<<<<<<< HEAD
+=======
+                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al obtener evento.");
+>>>>>>> master
                 return StatusCode(500, new { message = "Error interno al obtener evento.", detail = ex.InnerException?.Message ?? ex.Message });
             }
         }
@@ -153,6 +165,10 @@ namespace ReservAr.Controllers
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
+=======
+                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al buscar eventos.");
+>>>>>>> master
                 await _auditLogService.Log(-1, "REQUEST_EVENT_SEARCH_ERROR", "Event", "0", "Error inesperado al buscar eventos: " + ex.Message);
                 return StatusCode(500, new { message = "Error interno al buscar eventos.", detail = ex.InnerException?.Message ?? ex.Message });
             }
