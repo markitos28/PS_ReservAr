@@ -30,7 +30,7 @@ async function loadData() {
         UIManager.elements.eventTitle.textContent = `${event.name} - ${event.venue}`;
 
         // Limpiar expirados y cargar sectores
-        await ReservationService.clearExpired();
+        // await ReservationService.clearExpired();
         state.sectors = await ReservationService.getSectors(state.eventId);
 
         // Cargar asientos para cada sector
@@ -119,21 +119,78 @@ function setupEventListeners() {
     // Botón Pago
     UIManager.elements.payButton.onclick = async () => {
         UIManager.setLoading(true);
+        
         try {
             const user = AuthManager.getLoggedUser();
+            var amountPaymentSeats = 0;
+            for (const seat of state.selectedSeats) {
+                for (const sector of state.sectors) {
+                    if (sector.id === seat.sectorId) {
+                        amountPaymentSeats += sector.price;
+                    }
+                }  
+            }
+            
+            // Quitar el sector en la request de pago, ya que el backend lo calcula a partir del asiento
             const paymentData = {
                 eventId: parseInt(state.eventId),
-                sectorId: state.selectedSector.id,
+                sectorId: 0,
                 quantitySeat: state.selectedSeats.length,
                 userId: user.id,
                 reservationId: state.activeReservation.id,
-                amount: state.selectedSector.price * state.selectedSeats.length,
+                amount: amountPaymentSeats,
                 currency: "ARS"
             };
-            await ReservationService.processPayment(paymentData);
-            Swal.fire("¡Éxito!", "Pago procesado", "success").then(() => window.location.href = './index.html');
+            const paymentResponse = await ReservationService.processPayment(paymentData);
+            
+            if (!paymentResponse.success) {
+                Swal.fire("ERROR!", "Pago no procesado", "error").then(() => 
+                    {
+                        setTimeout(() => {
+                            window.location.href = './reservations.html';
+                        }, 5000); // Esperar 5 segundos antes de recargar
+                    });
+                return;
+            }
+
+            console.log("Pago procesado exitosamente:", paymentResponse);
+            
+
+            var eventresponse = await ReservationService.getEvent(paymentResponse.eventId);
+            console.log("Detalles del evento para el comprobante:", eventresponse);
+
+            // Generar el comprobante de compra con los detalles del evento, sectores y asientos
+            const receiptHtml = `
+                <div style="text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                    <p><strong>Evento:</strong> ${eventresponse.name}</p>
+                    <p><strong>Cliente:</strong> ${user.name || user.email}</p>
+                    <hr>
+                    <p><strong>Asientos Reservados:</strong></p>
+                    <ul style="list-style: none; padding: 0;">
+                        ${state.selectedSeats.map(seat => {
+                            const sector = state.sectors.find(s => s.id === seat.sectorId);
+                            return `<li>• <b>Sector:</b> ${sector?.name} | <b>Butaca:</b> ${seat.seatNumber} ($${sector?.price})</li>`;
+                        }).join('')}
+                    </ul>
+                    <hr>
+                    <p style="font-size: 1.2em; color: #2ecc71;"><strong>Total Pagado: $${amountPaymentSeats} ARS</strong></p>
+                    <p><small style="color: #7f8c8d;">ID de Transacción: ${state.activeReservation.id}</small></p>
+                </div>
+            `;
+
+            Swal.fire({
+                title: '¡Pago Confirmado!',
+                html: receiptHtml,
+                icon: 'success',
+                confirmButtonText: 'Finalizar y volver al inicio',
+                allowOutsideClick: false
+            }).then(() => {
+                window.location.href = './index.html';
+            });
+
         } catch (e) {
             UIManager.showError("Error en el pago.");
+            console.error(e);
         } finally {
             UIManager.setLoading(false);
         }

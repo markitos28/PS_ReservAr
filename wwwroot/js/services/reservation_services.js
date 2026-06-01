@@ -15,5 +15,5 @@ export const ReservationService = {
     processPayment: (paymentData) => fetchWithAuth('/payments', {
         method: 'POST',
         body: JSON.stringify(paymentData)
-    })
+    }).then(r=> r.json())
 };

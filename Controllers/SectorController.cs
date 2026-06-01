@@ -14,13 +14,11 @@ namespace ReservAr.Controllers
     public class SectorsController : ControllerBase
     {
         private readonly ISectorService _sectorService;
-        private readonly ILogger<SectorsController> _logger;
         private readonly IAuditLogServices _auditLogService;
 
-        public SectorsController(ISectorService sectorService, ILogger<SectorsController> logger, IAuditLogServices auditLogService)
+        public SectorsController(ISectorService sectorService, IAuditLogServices auditLogService)
         {
             _sectorService = sectorService;
-            _logger = logger;
             _auditLogService = auditLogService;
         }
 
@@ -66,7 +64,7 @@ namespace ReservAr.Controllers
         {
             var result = await _sectorService.UpdatePriceAsync(sectorId, request);
 
-            if (result == null)
+            if (result is null)
             {
                 await _auditLogService.Log(-1, "REQUEST_SECTOR_UPDATE_PRICE_FAILED", "Sector", sectorId.ToString(), "Fallo al actualizar precio de sector: sector no encontrado - ID " + sectorId);
                 return NotFound(new { message = "Sector no encontrado." });
@@ -88,7 +86,7 @@ namespace ReservAr.Controllers
         {
             var result = await _sectorService.GetByIdAsync(sectorId);
 
-            if (result == null)
+            if (result is null)
             {
                 await _auditLogService.Log(-1, "REQUEST_SECTOR_GET_FAILED", "Sector", sectorId.ToString(), "Fallo al obtener sector: sector no encontrado - ID " + sectorId);
                 return NotFound(new { message = "Sector no encontrado." });

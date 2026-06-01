@@ -35,7 +35,7 @@ namespace ReservAr.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginDTO request)
         {
             var user = await _userService.GetUserByEmailAsync(request.Email);
-            if (user == null)
+            if (user is null)
             {
                 await _auditLogService.Log(-1, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
                 return Unauthorized("Invalid email or password.");

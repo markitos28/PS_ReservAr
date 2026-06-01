@@ -66,7 +66,7 @@ namespace ReservAr.Controllers
             {
                 var result = await _seatService.UpdateAsync(seatId, request);
 
-                if (result == null)
+                if (result is null)
                 {
                     return NotFound(new { message = "Asiento no encontrado." });
                 }
@@ -92,7 +92,7 @@ namespace ReservAr.Controllers
         {
             var result = await _seatService.GetByIdAsync(seatId);
 
-            if (result == null)
+            if (result is null)
             {
                 return NotFound(new { message = "Asiento no encontrado." });
             }

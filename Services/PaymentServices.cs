@@ -9,7 +9,7 @@ namespace ReservAr.Services
     {
         public async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest request)
         {
-            await Task.Delay(10000); // Simula un retraso en el procesamiento
+            await Task.Delay(5000); // Simula un retraso en el procesamiento
             PaymentResponse paymentResult = new PaymentResponse
             {
                 Success = true,

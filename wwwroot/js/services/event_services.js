@@ -15,4 +15,4 @@ export const EventService = {
         
         return response;
     }
-};
+};  

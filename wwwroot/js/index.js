@@ -33,10 +33,6 @@ async function fetchAndRender() {
         
         IndexUI.renderEvents(data.items, data.totalRecords, (id) => {
             const token = AuthManager.getToken();
-
-            console.log(token);
-            console.log(id);    
-
             window.location.href = token ? `./reservations.html?eventId=${id}` : './login.html';
         });
 

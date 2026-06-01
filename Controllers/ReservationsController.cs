@@ -14,13 +14,11 @@ namespace ReservAr.Controllers
     public class ReservationsController : ControllerBase
     {
         private readonly IReservationService _reservationService;
-        private readonly ILogger<ReservationsController> _logger;
         private readonly IAuditLogServices _auditLogService;
 
-        public ReservationsController(IReservationService reservationService, ILogger<ReservationsController> logger, IAuditLogServices auditLogService)
+        public ReservationsController(IReservationService reservationService, IAuditLogServices auditLogService)
         {
             _reservationService = reservationService;
-            _logger = logger;
             _auditLogService = auditLogService;
         }
 
@@ -44,19 +42,16 @@ namespace ReservAr.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: recurso no encontrado - SeatId: {request.SeatId} - {ex.Message}");
                 return NotFound(new { message = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("[CODE-ERROR] - {Message}", ex.Message);
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: operación inválida - SeatId: {request.SeatId} - {ex.Message}");
                 return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[CODE-ERROR] - Error inesperado al crear reserva.");
                 await _auditLogService.Log(request.UserId, "REQUEST_RESERVATION_CREATE_FAILED", "Reservation", request.UserId.ToString(), $"Fallo al crear reserva: error inesperado - SeatId: {request.SeatId} - {ex.Message}");
                 return StatusCode(500, new { message = "Error interno al crear reserva.", detail = ex.InnerException?.Message ?? ex.Message });
             }
@@ -74,7 +69,7 @@ namespace ReservAr.Controllers
         {
             var result = await _reservationService.GetByIdAsync(reservationId);
 
-            if (result == null)
+            if (result is null)
             {
                 await _auditLogService.Log(-1, "REQUEST_RESERVATION_GET_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
                 return NotFound(new { message = "Reserva no encontrada." });
@@ -99,7 +94,7 @@ namespace ReservAr.Controllers
             {
                 var result = await _reservationService.UpdateAsync(reservationId, request);
 
-                if (result == null)
+                if (result is null)
                 {
                     await _auditLogService.Log(-1, "REQUEST_RESERVATION_UPDATE_FAILED", "Reservation", "0", $"Reserva no encontrada - ReservationId: {reservationId}");
                     return NotFound(new { message = "Reserva no encontrada." });

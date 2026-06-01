@@ -36,7 +36,7 @@ namespace ReservAr.Services
 
                 var seat = await _context.Seats.FirstOrDefaultAsync(seat => seat.Id == request.SeatId);
 
-                if (seat == null)
+                if (seat is null)
                 {
                     throw new KeyNotFoundException("El asiento indicado no existe.");
                 }
@@ -101,11 +101,11 @@ namespace ReservAr.Services
                 var reservation = await _context.Reservations
                     .FirstOrDefaultAsync(r => r.Id == reservationId && r.UserId == userId);
 
-                if (reservation == null) throw new KeyNotFoundException("Reserva no encontrada.");
+                if (reservation is null) throw new KeyNotFoundException("Reserva no encontrada.");
                 if (reservation.Status != ReservationStatus.Pendiente) throw new InvalidOperationException("Reserva no válida para pago.");
 
                 var seat = await _context.Seats.FirstOrDefaultAsync(s => s.Id == reservation.SeatId);
-                if (seat == null) throw new KeyNotFoundException("Asiento no encontrado.");
+                if (seat is null) throw new KeyNotFoundException("Asiento no encontrado.");
 
                 // Transacción estricta: Actualizar reserva y asiento
                 reservation.Status = "PAGADO";
@@ -131,7 +131,7 @@ namespace ReservAr.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(reservation => reservation.Id == reservationId);
 
-            if (reservation == null)
+            if (reservation is null)
             {
                 return null;
             }
@@ -144,7 +144,7 @@ namespace ReservAr.Services
             var reservation = await _context.Reservations
                 .FirstOrDefaultAsync(reservation => reservation.Id == reservationId);
 
-            if (reservation == null)
+            if (reservation is null)
             {
                 return null;
             }

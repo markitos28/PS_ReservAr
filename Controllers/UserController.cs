@@ -74,7 +74,7 @@ namespace ReservAr.Controllers
         {
             var user = await _userService.GetUserByEmailAsync(email);
 
-            if (user == null)
+            if (user is null)
             {
                 return NotFound(new { message = "Usuario no encontrado." });
             }

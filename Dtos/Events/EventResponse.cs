@@ -1,4 +1,4 @@
-namespace ReservAr.Dtos.Events
+    namespace ReservAr.Dtos.Events
 {
     public class EventResponse
     {

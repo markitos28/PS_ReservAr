@@ -63,7 +63,7 @@ namespace ReservAr.Services
         {
             var entity = await _context.Sectors.FirstOrDefaultAsync(sec => sec.Id == sectorId);
 
-            if (entity == null)
+            if (entity is null)
             {
                 return null;
             }
@@ -88,7 +88,7 @@ namespace ReservAr.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(sec => sec.Id == sectorId);
 
-            if (entity == null)
+            if (entity is null)
             {
                 return null;
             }
