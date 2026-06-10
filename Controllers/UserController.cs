@@ -8,6 +8,9 @@ namespace ReservAr.Controllers
     [ApiController]
     [Route("api/v1/users")]
     [AllowAnonymous]
+    /// <summary>
+    /// Controlador para la gestión de perfiles de usuario y registro.
+    /// </summary>
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -19,7 +22,14 @@ namespace ReservAr.Controllers
             _auditLogService = auditLogService;
         }
 
+        /// <summary>
+        /// Registra un nuevo usuario en la plataforma.
+        /// </summary>
+        /// <param name="request">Datos del registro (nombre, email, password).</param>
+        /// <returns>Información básica del usuario creado.</returns>
         [HttpPost]
+        [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] UserRegisterDTO request)
         {
             var existingUser = await _userService.GetUserByEmailAsync(request.Email);
@@ -49,24 +59,31 @@ namespace ReservAr.Controllers
                 "Registro exitoso - " + request.Email
             );
 
-            return Ok(new { user.Id, user.Name, user.Email });
+            return Ok(new UserResponse { Id = user.Id, Name = user.Name, Email = user.Email });
         }
 
+        /// <summary>
+        /// Busca un usuario por su dirección de correo electrónico.
+        /// </summary>
+        /// <param name="email">Email del usuario a buscar.</param>
+        /// <returns>Datos del usuario si se encuentra.</returns>
         [HttpGet("by-email")]
+        [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetByEmail([FromQuery] string email)
         {
             var user = await _userService.GetUserByEmailAsync(email);
 
-            if (user == null)
+            if (user is null)
             {
                 return NotFound(new { message = "Usuario no encontrado." });
             }
 
-            return Ok(new
+            return Ok(new UserResponse
             {
-                user.Id,
-                user.Name,
-                user.Email
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email
             });
         }
     }

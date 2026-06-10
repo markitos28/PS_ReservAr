@@ -37,7 +37,7 @@ namespace ReservAr.Services
         public async Task<bool> ValidateUserCredentialsAsync(string email, string password)
         {
             var user = await GetUserByEmailAsync(email);
-            if (user == null) return false;
+            if (user is null) return false;
             bool isValid = VerifyPassword(password, user.PasswordHash);
             if (!isValid) return false;
             

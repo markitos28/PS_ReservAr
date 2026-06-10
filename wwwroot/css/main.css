@@ -1,0 +1,21 @@
+/* Importar base y variables */
+@import "./base/variables.css";
+
+/* Importar estructura */
+@import "./layout/grid.css";
+
+/* Importar componentes */
+@import "./components/buttons.css";
+@import "./components/seats.css";
+
+/* Estructura específica de Auth */
+@import "./layout/auth_layout.css";
+
+/* Componentes reutilizables */
+@import "./components/forms.css";
+
+/* Otros estilos menores (helpers, mensajes, etc.) */
+.hidden { display: none; }
+.loading-message { background: rgba(59, 130, 246, 0.14); color: #bfdbfe; padding: 14px; border-radius: 14px; }
+.error-message { background: rgba(239, 68, 68, 0.14); color: #fecaca; padding: 14px; border-radius: 14px; }
+.success-message { background: rgba(34, 197, 94, 0.14); color: #86efac; padding: 14px; border-radius: 14px; }

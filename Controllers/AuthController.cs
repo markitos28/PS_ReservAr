@@ -1,5 +1,6 @@
 using ReservAr.Services.Interfaces;
 using ReservAr.Dtos.Users;
+using ReservAr.Dtos.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
@@ -29,10 +30,12 @@ namespace ReservAr.Controllers
         /// </summary>
         /// <param name="request">Credenciales del usuario</param>
         [HttpPost]
+        [ProducesResponseType(typeof(AuthenticationResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] UserLoginDTO request)
         {
             var user = await _userService.GetUserByEmailAsync(request.Email);
-            if (user == null)
+            if (user is null)
             {
                 await _auditLogService.Log(-1, "REQUEST_AUTH_USER_NOT_FOUND", "User", "0", "Fallo de login: usuario no encontrado - " + request.Email);
                 return Unauthorized("Invalid email or password.");
@@ -47,11 +50,11 @@ namespace ReservAr.Controllers
 
             var token = _authenticationServices.GenerateJwtToken(user);
             await _auditLogService.Log(user.Id, "REQUEST_AUTH_LOGIN_SUCCESS", "User", user.Id.ToString(), "Login exitoso - " + request.Email);
-            return Ok(new
+            return Ok(new AuthenticationResponse
             {
-                access_token = token,
-                token_type = "Bearer",
-                expires_in = 3600
+                Access_token = token,
+                Token_type = "Bearer",
+                Expires_in = 3600
             });
         }
     }

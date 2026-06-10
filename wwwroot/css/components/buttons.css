@@ -1,0 +1,47 @@
+.btn {
+    border: none;
+    border-radius: 999px;
+    padding: 11px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none;
+    transition: transform 0.15s ease;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: #ffffff;
+}
+
+.btn-logout, .btn-outline {
+    background: var(--danger-gradient);
+    color: #ffffff;
+}
+
+.btn-outline-inicio {
+    background: transparent;
+    border: 1px solid rgba(248, 250, 252, 0.42);
+    color: var(--text-main);
+}
+
+.login-button {
+    height: 48px;
+    border: none;
+    border-radius: 999px;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 12px 25px rgba(236, 72, 153, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.login-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+.login-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

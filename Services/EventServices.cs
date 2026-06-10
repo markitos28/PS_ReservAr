@@ -60,7 +60,7 @@ namespace ReservAr.Services
         {
             var entity = await _context.Events.FirstOrDefaultAsync(evt => evt.Id == eventId);
 
-            if (entity == null)
+            if (entity is null)
             {
                 return null;
             }
@@ -102,7 +102,7 @@ namespace ReservAr.Services
                 .AsNoTracking()
                 .FirstOrDefaultAsync(evt => evt.Id == eventId);
 
-            if (entity == null)
+            if (entity is null)
             {
                 return null;
             }

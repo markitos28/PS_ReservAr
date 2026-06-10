@@ -8,6 +8,9 @@ namespace ReservAr.Controllers
     [ApiController]
     [Authorize]
     [Route("api/v1/payments")]
+    /// <summary>
+    /// Controlador para gestionar los pagos de las reservaciones.
+    /// </summary>
     public class PaymentController : ControllerBase
     {
         private readonly IAuditLogServices _auditLogService;
@@ -21,7 +24,15 @@ namespace ReservAr.Controllers
             _reservationService = reservationService;
         }
 
+        /// <summary>
+        /// Procesa el pago de una reserva. Valida el saldo/datos y, si es exitoso, finaliza la reserva y actualiza los asientos.
+        /// </summary>
+        /// <param name="request">Datos del pago, incluyendo ID de usuario, reserva y montos.</param>
+        /// <returns>Resultado del proceso de pago.</returns>
         [HttpPost]
+        [ProducesResponseType(typeof(PaymentResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ProcessPayment([FromBody] PaymentRequest request)
         {
             try
